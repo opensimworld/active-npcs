@@ -95,7 +95,7 @@ After editing the list of waypoints or links, click on the controller object and
 We provide a set of 2 php scripts (index.php, sql.inc.php) and a database schema (schema.sql) that can be used with an external LAMP web server to perform the pathfinding. Upload the scripts to your web server, and edit the database settings. Use the "schema.sql" to create the database. Important: you need to insert a record in the 'city_keys' table for your region amd set the 'ckey' field to something secret. This key must also be the same used in the  BASEURL variable of your controller , which you must also change to point to the URL of your web server.
 
 
-- To create an NPC, first create a transparent listener object, add the 'listener.lsl' script to it and wear it on some joint. This is the listener that listens on the public channels for the npc's name. For example if your NPC is  named "Foo", the NPC will capture all messages that begin with "Foo " such as "Foo go to theater" will ask the controller to handle them. 
+- To create an NPC, first create a transparent listener object, add the 'listener.lsl' script to it and wear it on your LEFT PEC. This is the listener that listens on the public channels for the npc's name. For example if your NPC is  named "Foo", the NPC will capture all messages that begin with "Foo " such as "Foo go to theater" will ask the controller to handle them. 
 
 - If you want to hide/show clothes, add the 'clotheslistener.lsl' script to your clothes. You will have to customize the "wear"/ drop commands on the listener script to tailor to your needs
 
