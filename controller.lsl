@@ -1,47 +1,63 @@
-
 integer channel = 68;
 
-// Enter a list of names of your avatars. For each one you need to save a notecard by clicking on the controller object
-// and selecting "SaveAvi". The full name of the avatar will be "Foo NPC"
-list availableNames = ["Foo", "Bar", "John", "Doe"];
 
-// Base url in case you use an external http server for the "goto" command
+// Add the names of your NPCs here
+list availableNames = ["Kriton", "Leon", "Ariston", "Midas", "Ares", "Icaros", "Dedalos", "Pan", "Nais", "Lydia"]; 
+
+// Change this to the URL of your web server (if you have set up one) and remember to change the cityKey to your own key
 string BASEURL = "http://opensimworld.com/oscity/?ac=1&cityKey=&";
 
 
-// The contents of these lists are loaded from the "waypoints" and "links" notecards
+// These will be loaded from notecards
 list wNodes = [];
 list wLinks = [];
 
-
-// Specify a list of targets for the "flyfollow" command. The numbers are the waypoing number, i.e. the line number that
-// correspond to the node in the "waypoints" notecard
-list flyTargets = [7, 9, 10,  13, 14, 15, 16, 17, 18, 19, 20, 21 , 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,  35,36,37,38,39,40,41,42];
-
-
-// Specify notecards to execute at specific map points
-// When an avi reaches this node, it will execute the notecard.
+// List of auto-run notecards. The NPC will automatically run the specified notecard when they are in this node
 list wAutorunScripts = [
-3, "gym.scr"
+33, "gymnasium.scr"
 ];
 
 
-// Put some dance animations in the controller object and add their names here
+// Specify list of nodes for the "Flyaround" command
+list flyTargets = [7, 9, 10,  13, 14, 15, 16, 17, 18, 19, 20, 21 , 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,  35,36,37,38,39,40,41,42];
+
+
+
+// Put some animations and add their names here for the "dance" command
 list dance1 = [
 "Modern 01", 
 "Modern 02", 
 "Modern 03", 
-"Modern 04"
+"Modern 04", 
+"Modern 05", 
+"Modern 06", 
+"Modern 07", 
+"Modern 08", 
+"Modern 09", 
+"Modern 10", 
+"Modern 11", 
+"Modern 12", 
+"Modern 13", 
+"Modern 14", 
+"Modern 15", 
+"Modern 16", 
+"Modern 17", 
+"Modern 18", 
+"Modern 19",
+"Modern 20"  
 ];
 
 
-
-// Put the key of an object that you can use to mark map points by using the "mark" command
+// Change this to the key of an object used for the "mark" command
 key INDICATOR = "db87ca3d-8403-4c59-bc5e-2e2d31806568";
 
 
-// Dialog commands
 list menuItems = ["SaveAvi", "LoadAvi", "RemoveAvi", "RemoveAll", "Rescan",  "TimerOff", "UploadWP", "UploadLnk", "ReloadMap", "Close"];
+
+
+key MAT_KEY = "12e632f9-ac6f-4b38-9f71-630bb47df81d";
+key RUN_CONTROLLER="6649f153-2bbd-48a2-a39d-70342c126176";
+key STADIUM_CONTROLLER="a0887ae1-593e-4660-a4a0-539383218a9a";
 
 string userInputState ="";
 integer gListener;
@@ -65,6 +81,7 @@ list aviScriptIndex;
 list aviScriptText;
 list aviHttpId;
 list aviVar1;
+list aviScriptState;
 integer aviIndex = -1;
 integer a;
 integer b;
@@ -118,6 +135,7 @@ integer RescanAvis()
                         aviScriptIndex += -1;
                         aviScriptText += "";
                         aviVar1 += 0;
+                        aviScriptState += "";
                         llOwnerSay("Added '"+ nm + "'");
                     }
 
@@ -205,14 +223,15 @@ integer GetNearestNode(vector pos)
 }
 
 
+
+// Get  path through LSL -- Slow
 integer GenPath(integer a, integer tgt, string path, list foundPaths, integer depth)
 {
     
     //llOwnerSay("genPath "+a+", "+tgt+", "+opath + ", " + depth);
-    //string path = opath;
+    
     if (depth > 10) 
     {
-        //llOwnerSay("Break after " + (path));
         return 0;
     }
 
@@ -231,13 +250,11 @@ integer GenPath(integer a, integer tgt, string path, list foundPaths, integer de
             else if (ca == a)
                 fn = cb;
 
-            if (llSubStringIndex(path, ":"+fn+":")<0) // llListFindList(path, [fn])<0)
+            if (llSubStringIndex(path, ":"+fn+":")<0)
             {
-                //llOwnerSay("Dive "+ fn);
                 if (fn == tgt)
                 {
                     path += ""+fn+":";
-                    llOwnerSay("Found " + (path));
                     foundPaths += (path);
                     return 1;
                 }
@@ -254,7 +271,6 @@ integer GenPath(integer a, integer tgt, string path, list foundPaths, integer de
     }
     return 0;
 }
-
 
 list gotoCache;
 
@@ -286,6 +302,7 @@ string GetGotoPath(integer nodeA, integer nodeB)
 
     return least;
 }
+
 
 integer GetNPCIndexByUid(key name) /// name is in lowercase
 {
@@ -336,10 +353,11 @@ SetScriptAlarm(integer aviId, integer time)
 
 
 
+
+// Handler for all commands coming from chat
 integer ProcessNPCCommand(list tokens)
 {
-    //list tokens = llParseString2List(mes,[" "],["."]);
-    // first is just !
+    // first token is just "!"
     string sendUid = llList2String(tokens,1);
     string npcName = llToLower(llList2String(tokens,2));
     string name2 = llToLower(llList2String(tokens,3));
@@ -360,18 +378,9 @@ integer ProcessNPCCommand(list tokens)
     string cmd1= llList2String(tokens,4);
     string cmd2= llList2String(tokens,5);
     
-    //llOwnerSay("UID='"+sendUid+"' npcName='"+npcName+"' CMD='"+cmd1+"' '"+cmd2+"'");
-
     list userData = llGetObjectDetails((key)sendUid, [OBJECT_NAME,OBJECT_POS, OBJECT_ROT]);
-    //llOwnerSay("U"+ llList2String(userData, 0)+ " at "+ (string)llList2Vector(userData,1) + " -> command "+cmd);
-    string org = llList2String(userData, 0);
-
-    if (llToLower(npcName) == "ares"  && org != "Satyr Bator")
-    {
-        //osNpcSay(uNPC, "I am Ares the God of War! I do NOT take orders!"); 
-        //return 1;
-    }
     
+    string org = llList2String(userData, 0);
 
     if (name2 != npcName)
     {
@@ -383,7 +392,6 @@ integer ProcessNPCCommand(list tokens)
     }
     else if (cmd1 == "follow")
     {
-
         aviStatus = llListReplaceList(aviStatus, ["follow"], idx, idx);
         if (cmd2=="me" || cmd2=="")
         {
@@ -408,7 +416,11 @@ integer ProcessNPCCommand(list tokens)
         }
 
     }
-    else if (cmd1 == "var1")
+    else if (cmd1 == "set-state") // set a variable that indicates the current state of an NPC -- useful for scripts
+    {
+        aviScriptState= llListReplaceList(aviScriptState, [cmd2], idx, idx);
+    }
+    else if (cmd1 == "var1") // Do something on the counter var1
     {
             if (cmd2 == "++" || cmd2 == "--")
             {
@@ -424,7 +436,7 @@ integer ProcessNPCCommand(list tokens)
             else
                 llOwnerSay("Unknown: "+ cmd2);
     }
-    else if (cmd1 == "fly" && cmd2=="with")
+    else if (cmd1 == "fly" && cmd2=="with")  // "fly with me" "fly with Foo"
     {
         string who = llList2String(tokens, 6);
         if (who == "me")
@@ -436,7 +448,7 @@ integer ProcessNPCCommand(list tokens)
             aviFollow = llListReplaceList(aviFollow, [llList2Key(aviUids, GetNPCIndex(who))], idx, idx);
         }
         aviStatus = llListReplaceList(aviStatus, ["flyfollow"], idx, idx);
-        osNpcSay(uNPC, "OK");
+        osNpcSay(uNPC, "Flying with "+who);
 
     }
     else if (cmd1 == "help")
@@ -445,43 +457,43 @@ integer ProcessNPCCommand(list tokens)
     }
     else if (cmd1 == "leave")
     {
-        // Start wandering
+        // Start wandering between waypoints
         aviNodes = llListReplaceList(aviNodes, [GetNearestNode(osNpcGetPos(uNPC))], idx, idx);
         aviStatus = llListReplaceList(aviStatus, ["wander"], idx, idx);
         string nm = llList2String(userData, 0);
-        osNpcSay(uNPC, "Goodbye!");
+        osNpcSay(uNPC, "OK, goodbye sir!");
 
     }
     else if (cmd1 == "flyaround")
     {
-        
-        //aviFollow = llListReplaceList(aviFollow, [(key)sendUid], idx, idx);
-        aviStatus = llListReplaceList(aviStatus, ["flyaround"], idx, idx);
+        // Start flying about between the waypoints in the "flyTargets" list -- useful for birds
+        aviStatus = llListReplaceList(aviStatus, ["godfly"], idx, idx);
         string nm = llList2String(userData, 0);
-        osNpcSay(uNPC, "Flying around like an eagle!");
+        osNpcSay(uNPC, "Flying like an eagle!!");
 
     }
     else if (cmd1 == "dance")
     {
+        //Drop a few dance animations in the controller object and change the "dance1" list at the top. This will start cycling the dances
+
         aviStatus = llListReplaceList(aviStatus, ["dance"], idx, idx);
         osNpcSay(uNPC, "Oh, with pleasure Sir!");
-        aviTime = llListReplaceList(aviTime, [0], idx, idx);
-        
+        aviTime = llListReplaceList(aviTime, [0], idx, idx);        
         osNpcStand(uNPC);
         string old_anim = llList2String(aviDanceAnim, idx);
         osNpcStopAnimation(uNPC, old_anim);
     }
     else if (cmd1 == "stop")
     {
+        // Stand up and stop  all animations
         aviStatus = llListReplaceList(aviStatus, [""], idx, idx);
-        osNpcSay(uNPC, "OK!");
+        osNpcSay(uNPC, "OK sir!");
         aviTime = llListReplaceList(aviTime, [0], idx, idx);
         string old_anim = llList2String(aviDanceAnim, idx);
 
         integer d;
         for  (d=0; d < llGetListLength(dance1); d++)
         {
-            //llOwnerSay("Stopping " + old_anim);
             osNpcStopAnimation(uNPC, llList2String(dance1, d));
         }
         osNpcStopMoveToTarget(uNPC);
@@ -490,30 +502,29 @@ integer ProcessNPCCommand(list tokens)
     }
     else if (cmd1 == "come")
     {
-        //aviFollow = llListReplaceList(aviFollow, [(key)sendUid], idx, idx);
-        //aviStatus = llListReplaceList(aviStatus, ["follow"], idx, idx);
+        
+        // "Come here"
         osNpcStand(uNPC);
+        osNpcStopMoveToTarget(uNPC);
         osTeleportAgent(uNPC, llList2Vector(userData, 1) + <1, 0, 0>
 , <1,1,1>);
-        osNpcSay(uNPC, "Coming right over!");
+        osNpcSay(uNPC, "Coming right over Sir!");
 
     }
     else if (cmd1 == "stand")
     {
+        // Stand up
         aviStatus = llListReplaceList(aviStatus, [""], idx, idx);
-        osNpcSay(uNPC, "OK!");
-        //osNpcStopAnimation(uNPC, "assupB");
-        //osNpcPlayAnimation(uNPC, "stand1");
         osNpcStand(uNPC);
-        vector tgt = osNpcGetPos(uNPC) + <2,0,0>*osNpcGetRot(npc);
-        osNpcMoveToTarget(uNPC, tgt, OS_NPC_NO_FLY );
+        osNpcStopMoveToTarget(uNPC);
     }
     else if (cmd1 == "moveto" || cmd1 == "movetov" || cmd1 == "runtovr")
     {
+        // Walk to the specified waypoint or vector
         vector v;
         if  (cmd1 == "runtovr")
         {
-            // Run to somewhere within the volume enclosed by v1 and v2
+            // run to somewhere within the volume enclosed by v1 and v2
             vector v1 = (vector) cmd2;
             vector v2 = (vector) llList2String(tokens, 6);
             v.x= v1.x + llFrand(v2.x-v1.x);
@@ -544,18 +555,35 @@ integer ProcessNPCCommand(list tokens)
     else if (cmd1 == "if" || cmd1 == "if-not")
     {
         // Only 1 level of ifs is supported
-        string what = cmd2;
+        // must be followed by 'end-if'
         integer res = 0;
         if (cmd2 == "name-is")
         {
-            if (llToLower(npcName) == llToLower(llList2String(tokens,6)))
+            integer k;
+            for (k=6; k < llGetListLength(tokens); k++)
             {
-                res=1;
+                if (llToLower(npcName) == llToLower(llList2String(tokens,k)))
+                    res=1;
             }
-            llOwnerSay("Name-is:" + llList2String(tokens,6));
+        }
+        else if (cmd2 == "state-is")
+        {
+            // If state-is <avi-name> <state-value>
+            integer nwho = GetNPCIndex(llList2String(tokens,6));
+            if (nwho >=0)
+            {
+                string what = llList2String(aviScriptState,nwho);
+                integer k;
+                for (k=7; k < llGetListLength(tokens); k++)
+                {
+                    if (what == llList2String(tokens,k))
+                                      res=1;
+                }
+            }
         }
         else if (cmd2 == "var1-gt" || cmd2 == "var1-lt" || cmd2=="var1-eq")
         {
+            // check if value of var1 is >, < or == to the second argument
             integer var1 =llList2Integer(aviVar1, idx);
             integer val  =(integer)llList2String(tokens, 6);
             
@@ -566,7 +594,8 @@ integer ProcessNPCCommand(list tokens)
         
         if (cmd1 == "if-not")
             res = !res;
-        llOwnerSay("res-is:" + (string)res);
+            
+        llOwnerSay("Res:" + (string)res);
         integer scrline = llList2Integer(aviScriptIndex, idx);
         if (scrline <0) 
         {
@@ -594,7 +623,7 @@ integer ProcessNPCCommand(list tokens)
     }
     else if (cmd1 == "jump")
     {
-        //integer scrline = llList2Integer(aviScriptIndex, idx);
+        // Jump to a label in the notecard
         integer foundLine = FindScriptLineAfter(llList2String(aviScriptText,idx), "@"+cmd2,-1);
         if (foundLine == -1)
         {
@@ -607,9 +636,11 @@ integer ProcessNPCCommand(list tokens)
     }
     else if ((cmd1 == "go" && cmd2 == "to")   || cmd1 == "goto")
     {
-        //The go to/goto commands perform interpolation between the map points. However this requires 
-        // an external web server. We have provided an alternative LSL function above (GetGotoPath()) , but 
-        //it is too slow. Use the PHP scripts we provide for faster performance.
+     
+        // Pathfinding command
+        // Goto: go to specified waypoint
+        // Go to <target>: go to the waypoint named <target>
+        
         integer nearest = GetNearestNode(osNpcGetPos(uNPC));
     
         integer foundId =-1;        
@@ -658,16 +689,12 @@ integer ProcessNPCCommand(list tokens)
     }
     else if (cmd1 == "wait")
     {
-        // Set an alarm for later
+        // cause the script to wait for <arg> seconds 
         SetScriptAlarm(idx, (integer) cmd2);
-    }
-    else if (cmd1 == "repeat")
-    {
-        // Go back to the beginning of script
-        SetScriptAlarm(idx, 0);
     }
     else if (cmd1 == "say")
     {
+        // Say something on chat
         string txt = "";
         integer i;
         for (i=5; i < llGetListLength(tokens); i++)
@@ -676,6 +703,7 @@ integer ProcessNPCCommand(list tokens)
     }
     else if (cmd1 == "mark")
     {
+        // Move the indicator object to the specified waypoint (used for debugging the map)
         integer l=0;
         if (cmd2 == "nearest")
         {
@@ -688,13 +716,15 @@ integer ProcessNPCCommand(list tokens)
         llOwnerSay((string)p);
         osMessageObject(INDICATOR, (string)p + " " + (string)l);   
     }
+    else if (cmd1 == "get")
+    {
+        llOwnerSay("Getting "+uNPC+ " " + cmd2);
+        osMessageAttachments(uNPC, "penis-"+cmd2, [ATTACH_PELVIS], 0);
+    }
     else if (cmd1 == "wear" || cmd1 == "drop")
     {
-                
-        // Example wear / drop command. Tailor this according to your attached clothing
-        // For these to work, you must add the clotheslistener script to your attached clothes
-        // In this example, the avis wear a an a toga in the chest and pelvis, a helment in the head, a shield in the left 
-        // hand and a spear in the right hand
+        // Hide or show clothes. You want to customize this for 
+        // your own set of garments
         string what = cmd2;
         string com = "show";
         if (cmd1== "drop")
@@ -706,20 +736,18 @@ integer ProcessNPCCommand(list tokens)
             osMessageAttachments(uNPC, com, [ATTACH_LHAND], 0);
         else if (what == "spear")
             osMessageAttachments(uNPC, com, [ATTACH_RHAND], 0);
-        else if (what == "toga") 
+        else if (what == "chiton" || what == "toga") 
             osMessageAttachments(uNPC, com, [ATTACH_CHEST, ATTACH_PELVIS], 0);
-        else if (what == "armour") // should be armour
+        else if (what == "arms")
         {
            osMessageAttachments(uNPC, com, [ATTACH_LHAND, ATTACH_RHAND, ATTACH_HEAD], 0);
         }
         else
-            osNpcSay(uNPC, "Say '"+npcName+" "+cmd1+" <item>', <item> can be: helmet, shield, spear, toga, armour");
+            osNpcSay(uNPC, "Say '"+npcName+" "+cmd1+" <item>', <item> can be: helmet, shield, spear, chiton, arms");
     }
-    else if (cmd1 == "do") // Sit on the poseball having the name specified as the second argument
+    else if (cmd1 == "do")
     {
-            // E.G. assuming there are 2 poseballs named 'bar-sit' nearby
-            // entering "Foo do bar-sit"
-            // will cause the NPC to sit on the first poseball that is not transparent
+        // Sit-on-a-poseball command
        if (cmd2 == "")
        {
            osNpcSay(uNPC, "When i am near a pose ball, say '"+npcName+" do <ball label>' and i will sit on it. If using a menu-driven bed or mat, say '"+npcName+" sit' and i will hop on.");
@@ -727,21 +755,17 @@ integer ProcessNPCCommand(list tokens)
        else
        {
            string cmd = llStringTrim(cmd2+" "+llList2String(tokens, 6)+" "+llList2String(tokens,7), STRING_TRIM);
-           // There may be multiple balls with the same name, the avatar will sit on the first one that 
-           // is not transparent
-           osMessageAttachments(uNPC, "do "+cmd, [ATTACH_RIGHT_PEC], 0);
+            osMessageAttachments(uNPC, "do "+cmd, [ATTACH_RIGHT_PEC], 0);
        }
     }
     else if (cmd1 == "sit")
-    {   
-        // This is the same as the "do" command, except that it searches for the balls created by MLPv1/2 beds
-        // It will search nearby for the poseballs named ~ball5, ~ball4,~ball3, ~ball2, ~ball1, ~ball0 (in this order).
+    {
+        // Sit on  MLPV1/2 furniture poseballs
         osMessageAttachments(uNPC, "find-balls", [ATTACH_RIGHT_PEC], 0);
     }
-    else if (cmd1 == "script")
+    else if (cmd1 == "batch")
     {
-        // Specify a script to run in the chat window. Multiple commands can be separaated by ';'
-        // example: foo goto 3; do bar-sit; wait 20; stand up
+        // Run script commands from the chat, separated by ";"        
         string str = llDumpList2String(llList2List(tokens, 5, llGetListLength(tokens))," ");
         aviScriptText = llListReplaceList(aviScriptText, str, idx, idx);
         aviScriptIndex = llListReplaceList(aviScriptIndex, [1], idx, idx);
@@ -750,13 +774,11 @@ integer ProcessNPCCommand(list tokens)
     }
     else if (cmd1 == "run-notecard")
     {
-        // The NPC will run the script commands specified in the notecard that is given as the second argument
-        // e.g. "Foo run-notecard gym.scr"
-        // Script Notecards can contain any of the chat-commands as well as "if", "jump", "variable" counters etc.
+        // Run the script contained in the notecard <argument>
         string stext= osGetNotecard(cmd2 );
         aviStatus= llListReplaceList(aviStatus, "", idx, idx);
         if (stext == "")
-        
+        {
             osNpcSay(uNPC,"Could not load notecard '"+cmd2+"'");
             return 1;
         }
@@ -765,15 +787,14 @@ integer ProcessNPCCommand(list tokens)
         SetScriptAlarm(idx, 0);
     }
     else if (cmd1 == "stop-script")
-    {       
-        // Stop  the execution of the script that was given in chat or though a notecard. Is the equivalent
-        // of an exit() command  for notecard scripts
+    {
+        // Stop executing the script and exit
         aviScriptIndex = llListReplaceList(aviScriptIndex, [-1], idx, idx);
         SetScriptAlarm(idx, 0);
     }
     else if (llGetSubString(cmd1,0,0) == "@")
     {
-        // This is a label; do nothing
+        // It's a label; do nothing
     }
     else
     {
@@ -783,7 +804,6 @@ integer ProcessNPCCommand(list tokens)
     return 1;
 }
 
-// Try to find a new destination from the current map node, but dont go back to where we came from.
 integer FindNewTarget(integer curNode, integer prevNode)
 {
     //vector myloc=osNpcGetPos(npc);
@@ -851,7 +871,7 @@ integer MoveToNewTarget(integer idx)
 
 ExecScriptLine(string aviName, string scriptline)
 {
-    // The full script command expected has the following form, ( we expect the name of the npc twice). We use BATCH instedd of the sending-uid
+    // The token list expects the name of the avi twice. we use BATCH as the sending-uid identifier
     string command = "! BATCH " + aviName+" "+ aviName + " " + scriptline;
 
     list tokens = llParseString2List(command, [" "], [] );
@@ -867,18 +887,13 @@ default
     state_entry()
     {
         llListenRemove(gListener);
-        // The controller listener used by the dialog and for getting commands from npcs.
         gListener = llListen(channel, "", "", "");
         llOwnerSay("Listening on channel "+channel);
-        // Loads the map nodes from the notecard named "waypoints"
-        // Loads the lins between map nodes from the notecard named "links"
         LoadMapData();
         //llOwnerSay(llList2CSV(wNodes));
         //llOwnerSay(llList2CSV(wLinks));
         
-        // Searches for active NPCs and initializes their properties.
         RescanAvis();  
-        // Start the main loop timer, which executes everything
         llSetTimerEvent(5);
         greetedAvis = [];
     }
@@ -889,13 +904,14 @@ default
         llDialog(avi, "Welcome", menuItems, channel);
     }
     
-    
+
+    // The main loop where everything happens. 
+    // This checks the statuses of all avis and performs commands accordingly
     timer()
     {
         integer total = llGetListLength(aviUids);
         integer g;
         integer advanceScript;
-        // Go through each avi and do something  according to its current state
         for (g=0; g < total ; g++)
         {
                 advanceScript =0;
@@ -904,13 +920,14 @@ default
                 //name = llList2String(aviNames, g); 
                 string status = llList2String(aviStatus, g); 
 
-                if (status == "follow" || status == "flyfollow") // this npc is followng a user or is flying with one
+                if (status == "follow" || status == "flyfollow")
                 {
+                    // This NPC is following someone
                     integer stat=llGetAgentInfo(npc);
                     if (stat & AGENT_SITTING)
                     {
                         // We 've been sat. stop following
-                        //aviStatus = llListReplaceList(aviStatus, [""], g, g);
+
                         return;
                     }
                     
@@ -927,16 +944,14 @@ default
                     rotation rot = llList2Rot(userData,1);
                     float ang = llFrand(1.0);
 
-                    // Try to stay behind the avatar we are following, and try not to overlap with other avis 
-                    //that  may be following the same avi
-                    vector v = llList2Vector(userData,0) + <-0.6-g*0.6, (ang-0.5)*2.0,0>*rot;
+                    vector v = llList2Vector(userData,0) + <-0.7,0,0>*rot;
+                     //<-1.1*llSin(ang), 1.1*llCos(ang), 0>;
                     float dist = llVecDist(osNpcGetPos(npc), v);
-                    // If we are too far, we are probably stuck somewhere. Teleport us to where we should be
                     if  (status == "follow" && dist>50.)
                     {
                         osTeleportAgent(npc, v, <1,1,1>);
                     }
-                    else if  (dist>8)
+                    else if  (dist>4)
                     {
                         osNpcStopMoveToTarget(npc);    
                         if (status == "flyfollow")                
@@ -945,9 +960,9 @@ default
                             osNpcMoveToTarget(npc, v, OS_NPC_NO_FLY );
                     }
                 }
-                else if (status == "wander") // This is the status of NPCs that have been told to "leave". They wander around aimlessly 
+                else if (status == "wander")
                 {
-
+                    // This NPC is wandering between waypoints
                     if (1)
                     {
                         if (llGetUnixTime()  > llList2Integer(aviTime, g) +1)
@@ -955,15 +970,13 @@ default
                             integer curNode = llList2Integer(aviNodes, g);
                             integer i;
                             integer shouldMove =1;
-                            // If there is an autorun notecard defined for the current location, run it. See the wAutorunScripts array at the top
-                            // However avoid running it again for the next two minutes (otherwise the NPC wouldnt have a chance to leave the location and would replay the script indefinitely)
+                            // avoid looping back to the same script while we are about to leave
                             if (llGetUnixTime() >  llList2Integer(aviAlarm, g)+120)
                             {
                                 for (i=0; i < llGetListLength(wAutorunScripts); i+=2)
                                 {
                                     if (llList2Integer(wAutorunScripts,i) == curNode)
                                     {
-                                        // There is an autorun notecard associated with this node, ask the NPC to run it
                                         ExecScriptLine(llList2String(aviNames, g), "run-notecard "+llList2String(wAutorunScripts,i+1));
                                         shouldMove =0;
                                     }
@@ -976,10 +989,10 @@ default
                             }
                         }
                     }
-
                 }
-                else if (status == "flyaround") // Fly from node to node, good for birds
+                else if (status == "godfly")
                 {
+                    // This NPC is flying around
                     if (timerRuns%4 == 0)
                     {
                         integer idx = llList2Integer(flyTargets, (integer)llFrand(llGetListLength(flyTargets)));
@@ -994,8 +1007,9 @@ default
                         osNpcMoveToTarget(npc, nd +  <llFrand(1),llFrand(1),theight>, flag);
                     }
                 }
-                else if (status == "pathf") // Following a specific path  to a target node
+                else if (status == "pathf")
                 {
+                    // Pathfinding - this NPC is following the path to a destination
                     integer avits = llList2Integer(aviTime, g);
                     if (llGetUnixTime() > avits)
                     {
@@ -1004,13 +1018,14 @@ default
                         string path = llList2String(aviPath, g);
                         list pnodes = llParseString2List(path, [":"], [""]);
                         
-                        //llOwnerSay("p="+llList2CSV(pnodes));
+                        llOwnerSay("p="+llList2CSV(pnodes));
                         if (llGetListLength(pnodes) <1)
                         {
                             osNpcSay(npc, "I have arrived");
                             
                             aviStatus = llListReplaceList(aviStatus, [ "" ], g, g);
-                            // wake up the script when we have arrived at our destination
+                            
+                            // continue the script (if any), since we reached our destination
                             SetScriptAlarm(g, 0); 
 
                         }
@@ -1033,6 +1048,7 @@ default
                 }
                 else if  (status == "dance")
                 {
+                    // alternate between dances
                     integer ts = llGetUnixTime();
                     if (ts > llList2Integer(aviTime, g)+60)
                     {
@@ -1042,7 +1058,7 @@ default
                         integer newidx = (integer)llFrand(llGetListLength(dance1));
                         string new_anim =  llList2String(dance1, newidx);
                         
-                        //llOwnerSay("Switching to dance " + new_anim);
+                        llOwnerSay("Switching to dance " + new_anim);
                         
                         osNpcStopAnimation(npc, old_anim);
                         osNpcPlayAnimation(npc, new_anim);
@@ -1051,37 +1067,35 @@ default
                 }
                 else
                 {
-                    //unimplemented
-                     
+                    //
                 }
                 
                 
-                // If there is an active script, run the next line
+                // Execute the next script line if a script is active
+                
                 integer scriptIndex = llList2Integer(aviScriptIndex, g);
                 if (scriptIndex > 0) // This avi is executing a script
                 {
                     integer tsAlarm = llList2Integer(aviAlarm, g);
                     integer diff = llGetUnixTime() - tsAlarm;
 
-                    if (tsAlarm >0 && llGetUnixTime() >= tsAlarm ) 
+                    if (tsAlarm >0 && llGetUnixTime() >= tsAlarm ) // The script should continue now
                     {        
-                        // The script should wake and move to the next command now
                         string scriptData = llList2String(aviScriptText, g);
                         string scriptline = GetScriptLine(scriptData, scriptIndex);
-                        if (scriptline == "") // an empty line means end of script
+                        if (scriptline == "") // End of script
                         {
                                 // This will prevent any further execution
-                                llOwnerSay("Script End:"+ llList2String(aviNames, g));
+                                llOwnerSay("ScriptEnd: "+ llList2String(aviNames, g));
                                 aviScriptIndex = llListReplaceList(aviScriptIndex, [-1], g, g);
                         }
                         else
                         {
-                            // Run the next command in the next tick of the timer loop. 
-                            // Some commands will override this (e.g. goto, wait).
+                            // Set the timer for the next command 1 second later by default. Some commands will override this (e.g. go to, wait).
                             SetScriptAlarm(g, 1);
                             ExecScriptLine( llList2String(aviNames, g), scriptline);
                             // Advance script pointer 
-                            scriptIndex = llList2Integer(aviScriptIndex, g); // may have been changed
+                            scriptIndex = llList2Integer(aviScriptIndex, g); 
                             aviScriptIndex = llListReplaceList(aviScriptIndex, [scriptIndex+1], g,g);
                         }
                     }
@@ -1092,34 +1106,32 @@ default
     
 
 
-    listen(integer chan, string name, key id, string str) {    // WARNING id is not the NPC sernder's dont use it
+    listen(integer chan, string name, key id, string str) {    // WARNING "id" is not the uid of the NPC-sender
 
         list tok = llParseString2List(str, [" "] , [""]);
         string mes = llList2String(tok, 0);
-        //llOwnerSay("Listening: " + str);
-        if  (mes == "SaveAvi") // Dialog command, save the appearance of an avatar 
+
+        if  (mes == "SaveAvi")
         {
-            llDialog(avi, "Select a slave", availableNames, channel);       
-            //llTextBox(avi, "Enter NPC Name:", channel);
+            llDialog(avi, "Select NPC to save your appearance", availableNames, channel);       
+
             userInputState = "WAIT_APPNAME";
         }
         else if (mes == "Rescan")
         {
             RescanAvis();
         }
-        else if (mes == "LoadAvi") // Load an avatar (you must have saved its appearance first)
+        else if (mes == "LoadAvi")
         {
- //           llTextBox(llGetOwner(), "Load NPC Name:", channel);
-            llDialog(avi, "Select a slave", availableNames, channel);
+            llDialog(avi, "Select an NPC to load", availableNames, channel);
             userInputState = "WAIT_AVINAME";
         }
         else if (mes == "RemoveAvi")
         {
- //           llTextBox(llGetOwner(), "Load NPC Name:", channel);
-            llDialog(avi, "Select a slave", availableNames, channel);
+            llDialog(avi, "Select an NPC to delete", availableNames, channel);
             userInputState = "WAIT_REMOVEAVI";
         }
-        else if (mes == "RemoveAll") // Warning: will remove all NPCS (even those created by other scripts)
+        else if (mes == "RemoveAll")
         {
             avis = osGetAvatarList();
             llSay(0, llList2CSV(avis));
@@ -1135,23 +1147,29 @@ default
             aviUids = [];
             aviNames = [];
         }
-        else if (mes == "initcommands") // Specify a list of initial commands to run here. Use /68 initcommands to run them
+        else if (mes == "initcommands")
         {
+            // Specify a list of commands here. Send /68 initcommands to execute them
             integer i;
             list commands = [
-            "foo fly with bar",
-            "bar flyaround",
-            "john leave",
-            "jane go to stadium",
+            "icaros fly with dedalos",
+            "dedalos flyaround",
+            "ares leave",
+            "pan leave",
+            "midas leave",
+            "kriton leave",
+            "leon leave",
+            "ariston leave",
+            "nais go to baths",
+            "lydia go to baths" 
             ];
             
             for (i=0; i < llGetListLength(commands); i++)
             {
-                // Fake the commands
                 list toks = llParseString2List(llList2String(commands,i), [" "], []);    
                 list tok2 = ["!", "0000", llList2String(toks, 0)]; /// Need name of npc twice
                 tok2 += toks;
-                //llOwnerSay("Cmd="+llList2CSV(tok2));
+                llOwnerSay("Cmd="+llList2CSV(tok2));
                 ProcessNPCCommand(tok2);
                 llSleep(1);
             }           
@@ -1167,7 +1185,7 @@ default
         }
         else if (mes == "UploadWP")
         {
-            // Upload the waypoint data to the external web server
+            // Upload the map waypoints to the web server
             list lst; 
             integer i;
             integer j;
@@ -1185,7 +1203,7 @@ default
         }
         else if (mes == "UploadLnk")
         {
-            //upload the links data to the  external web server
+            // Upload the map links to the web server
             list lst; 
             integer i;
             integer j;
@@ -1195,15 +1213,13 @@ default
             
             llHTTPRequest(BASEURL+"act=updateLinks", [HTTP_METHOD, "POST"], ""+wpdata);
             llOwnerSay("Length="+llStringLength(wpdata));
-            //llOwnerSay(wpdata);
-            //osMakeNotecard("links", wpdata);
+
             
         }
+      
         else if (mes =="fetch")
         {
-            // bring an avatar by name near you.
-            //e.g. /68 fetch Foo
-            
+            // fetch an NPC here
             integer idx = GetNPCIndex(llList2String(tok, 1));
 
             llOwnerSay("Fetching "+(string)idx+"");
@@ -1218,9 +1234,7 @@ default
         }
         else if (mes =="FBALL")
         {
-            // This is sent by the llSensor commands that the NPCs perform when we ask them to sit somewhere
-            // We need to check if the ball is transparent first. We can do that only if the balled is owned 
-            //by the owner of the controller script.
+            // A poseball has been found. We have to check if it is transparent. If it is not, then we sit the NPC on it
             string npcname= llList2String( tok, 1);
             integer  idx = GetNPCIndex(npcname);
             if (idx<0) return;
@@ -1233,7 +1247,6 @@ default
                 float alpha = llList2Float(prop, 1);
                 if (alpha >0)
                 {
-                        // This is a non-transparent poseball, which means that it's not in use.  Sit on it.
                         osNpcStand(unpc);
                         osNpcStopMoveToTarget(unpc);
                         osNpcSit(unpc, ball, OS_NPC_SIT_NOW);
@@ -1245,12 +1258,11 @@ default
             @ballFound;
             
         }
-        else if (mes == "!") // somebody said sth to the npcs
+        else if (mes == "!") // Something that has been sent from the NPCs
         {
-            // This message has been heard from an NPC, process it.
             ProcessNPCCommand(tok);   
         } 
-        else if (userInputState != "" && mes != "")// dialog input 
+        else if (userInputState != "" && mes != "")//  Process dialog commands
         {
             //llOwnerSay("USER MSG WAIT");
             if (userInputState == "WAIT_APPNAME")
