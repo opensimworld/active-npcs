@@ -37,8 +37,8 @@ Example contents of a notecard with a script:
     moveto 5  (walk to waypoint #5)
     do float  (Sit on the poseball named float)
     wait 20  (wait approximately 20 seconds while still sitting)
-    stand  (stand up)
-    movetov <230,10,22> ( walk to a specific point in your region)
+    stand up
+    movetov <230,10,22> ( walk to a specific point (vector) in your region)
     Go to theater (follow the shortest path that leads to the waypoint named "Theater")
     say blah (Say "blah" on the public channel)
     dance (start playing dance animations)
@@ -66,10 +66,10 @@ The system is based on a number of conventions commonly used in open worlds. It 
 
 Overview of setup:
 - Drop the controller script in a controller object. Edit the script and  change the "availableNames" list to contain the names that you want your NPCs to have.
-- Create a notecard named "waypoints" which defines the waypoints of your region (optional but you 'll miss half the fun without it)
+- Create a notecard named "waypoints" which defines the waypoints of your region (optional but you 'll miss half the fun without it). Drop the notecard in the controller object.
 -- Each line in the notecard is of the form "x,y,z,name-of-waypoint"
 - Create a notecard named "links" that defines which waypoints are connected to each other
--- Each line in this notecard is of the form p1,p2, where p1 and p2 are the line numbers of the waypoints in the "waypoints" notecard
+-- Each line in this notecard is of the form p1,p2, where p1 and p2 are the line numbers of the waypoints in the "waypoints" notecard. Drop this notecard in the controller object.
 
 For example for a region with 4 waypoints named "house", "gym", "bar" and "theater" the "waypoints" notecard would be 
 
@@ -85,8 +85,6 @@ The "links" notecard would contain something like this:
     2,3
 
 which means that the house is connected with the gym and bar, and the bar is connected to the theater (all connections are reciprocal)
-
-You can ask your NPCs to go to a waypoint number directly with the "moveto" command.
 
 After editing the list of waypoints or links, click on the controller object and select "ReloadMap" to reload the changed waypoint data.
 
