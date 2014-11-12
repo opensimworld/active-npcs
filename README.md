@@ -65,7 +65,7 @@ ActiveNPCs are designed to be interactive, i.e. they can take commands from the 
 The system is based on a number of conventions commonly used in open worlds. It also uses heavily opensim-specific features such as osListenRegex and osMessageAttachment which allow it to run fast with very little lag and minimal resource consumption. 
 
 Overview of setup:
-- Drop the controller script in a controller object. Edit the script and  change the "availableNames" list to contain the names that you want your NPCs to have.
+- Drop the controller script in a controller object. Edit the script and  change the "availableNames" list to contain the names that you want your NPCs to have. Important: Use only single-word (no spaces) names. The last name of your NPC will be "NPC".
 - Create a notecard named "waypoints" which defines the waypoints of your region (optional but you 'll miss half the fun without it). Drop the notecard in the controller object.
 -- Each line in the notecard is of the form "x,y,z,name-of-waypoint"
 - Create a notecard named "links" that defines which waypoints are connected to each other
@@ -92,15 +92,14 @@ After editing the list of waypoints or links, click on the controller object and
 
 We provide a set of 2 php scripts (index.php, sql.inc.php) and a database schema (schema.sql) that can be used with an external LAMP web server to perform the pathfinding. Upload the scripts to your web server, and edit the database settings. Use the "schema.sql" to create the database. Important: you need to insert a record in the 'city_keys' table for your region amd set the 'ckey' field to something secret. This key must also be the same used in the  BASEURL variable of your controller , which you must also change to point to the URL of your web server.
 
+- To create the appearance notecards for your NPCs, first create a transparent listener object, add the 'listener.lsl' script to it and wear it on your LEFT PEC. This is the listener that listens on the public channels for the npc's name. For example if your NPC is  named "Foo", the NPC will capture all messages that begin with "Foo " such as "Foo go to theater" will ask the controller to handle them. 
 
-- To create an NPC, first create a transparent listener object, add the 'listener.lsl' script to it and wear it on your LEFT PEC. This is the listener that listens on the public channels for the npc's name. For example if your NPC is  named "Foo", the NPC will capture all messages that begin with "Foo " such as "Foo go to theater" will ask the controller to handle them. 
+- If you want to hide/show clothes, add the 'clotheslistener.lsl' script to your clothes. You will have to customize the "wear"/ "drop" commands on the listener script to tailor to your needs.
 
-- If you want to hide/show clothes, add the 'clotheslistener.lsl' script to your clothes. You will have to customize the "wear"/ drop commands on the listener script to tailor to your needs
+- Remember that if you edit any of your attachments, you need to detach and reattach them before saving your appearance. This is required by opensim.
 
-Remember that if you edit any of your attachments, you need to detach and reattach them before saving your appearance. This is a requirement for  opensimulator NPCs to work.. 
-
-- When your appearance is ready, click on the controller object, select SaveAvi and choose which NPC's appearance you want to save. 
-- You can now load your NPC by clicking on the controller-> LoadAvi-> select your NPC's name. Issue some commands to your npc to make sure it works, e.g. "Foo come here" "Foo say something" "Foo follow me"
+- When your appearance is ready, click on the controller object, select SaveAvi and choose the NPC  whose appearance notecard you want to save.
+- You can now load your NPC by clicking on the controller-> LoadAvi-> select your NPC. Issue some commands to your npc to make sure it works, e.g. "Foo come here" "Foo say something" "Foo follow me"
 
 - If you want the NPCs to sit on poseballs use the provided "poseball.lsl" script. The convention is that the poseball's name defines the command. E.g. if your poseball object is named "float", then you can say "Foo do float" to make the NPC sit on it. ("Foo stand up" gets the npc back up)
 
