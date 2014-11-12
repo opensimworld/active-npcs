@@ -5,7 +5,7 @@ integer channel = 68;
 list availableNames = ["Kriton", "Leon", "Ariston", "Midas", "Ares", "Icaros", "Dedalos", "Pan", "Nais", "Lydia"]; 
 
 // Change this to the URL of your web server (if you have set up one) and remember to change the cityKey to your own key
-string BASEURL = "http://opensimworld.com/oscity/?ac=1&cityKey=&";
+string BASEURL = "http://opensimworld.com/oscity/?ac=1&cityKey=your_city_key&";
 
 
 // These will be loaded from notecards
