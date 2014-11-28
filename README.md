@@ -94,7 +94,7 @@ We provide a set of 2 php scripts (index.php, sql.inc.php) and a database schema
 
 - To create the appearance notecards for your NPCs, first create a transparent listener object, add the 'listener.lsl' script to it and wear it on your LEFT PEC. This is the listener that listens on the public channels for the npc's name. For example if your NPC is  named "Foo", the NPC will capture all messages that begin with "Foo " such as "Foo go to theater" will ask the controller to handle them. 
 
-- If you want to hide/show clothes, add the 'clotheslistener.lsl' script to your clothes. You will have to customize the "wear"/ "drop" commands on the listener script to tailor to your needs.
+- If you want to hide/show attachments, add the 'clotheslistener.lsl' script to your attachments. You will have to customize the "wear"/ "drop" commands on the listener script to tailor to your needs.
 
 - Remember that if you edit any of your attachments, you need to detach and reattach them before saving your appearance. This is required by opensim.
 
