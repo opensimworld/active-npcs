@@ -1,3 +1,16 @@
+/* 
+OpenSimWorld NPC framework
+
+You  can see a demo of this in the OpenSimWorld region
+hypergrid.org:8002:OpenSimWorld
+
+
+This is FREE SOFTWARE 
+
+*/
+
+
+
 integer channel = 68;
 
 
