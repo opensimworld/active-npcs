@@ -65,9 +65,10 @@ ActiveNPCs are designed to be interactive, i.e. they can take commands from the 
 The system is based on a number of conventions commonly used in open worlds. It also uses heavily opensim-specific features such as osListenRegex and osMessageAttachment which allow it to run fast with very little lag and minimal resource consumption. 
 
 Overview of setup:
-- Drop the controller script in a controller object. Edit the script and  change the "availableNames" list to contain the names that you want your NPCs to have. Important: Use only single-word (no spaces) names. The last name of your NPC will be "NPC".
+- Drop the controller script in a controller object. 
+- Create a notecard named "npc_names". Enter the first names of your NPCs, one name per line. Important: Use only single-word (no spaces) names. The last name of your NPC will always be "NPC".
 - Create a notecard named "waypoints" which defines the waypoints of your region (optional but you 'll miss half the fun without it). Drop the notecard in the controller object.
--- Each line in the notecard is of the form "x,y,z,name-of-waypoint"
+-- Each line in the notecard is of the form "x,y,z,name-of-waypoint,optional-notecard-name". The optional-notecard-name is the (optional) name of a notecard that will automatically be executed whenever an NPC reaches this waypoint
 - Create a notecard named "links" that defines which waypoints are connected to each other
 -- Each line in this notecard is of the form p1,p2, where p1 and p2 are the line numbers of the waypoints in the "waypoints" notecard. Drop this notecard in the controller object.
 
@@ -75,7 +76,7 @@ For example for a region with 4 waypoints named "house", "gym", "bar" and "theat
 
     30,20,22,House
     40,30,22,Gym
-    40,60,22,Bar
+    40,60,22,Bar,dance.scr
     80,90,22,Theater
 
 The "links" notecard would contain something like this:
@@ -86,22 +87,25 @@ The "links" notecard would contain something like this:
 
 which means that the house is connected with the gym and bar, and the bar is connected to the theater (all connections are reciprocal)
 
-After editing the list of waypoints or links, click on the controller object and select "ReloadMap" to reload the changed waypoint data.
+After editing the list of waypoints or links, click on the controller object and select "ReConfig" to reload the changed configuration.
 
-- If you want your NPCs to be able to interpolate between the points , you have to use an external web server, since LSL is too slow for this (we provide a simplistic interpolation function in the code but it's not used and gets unusably slow for paths that have more than 10 hops). This way, your NPCs can follow commands such as "go to Theater" , which will take them to the theater using the least possible number of hops between waypoints. 
+- To create the appearance notecards for your NPCs, first create a transparent listener object, add the 'listener.lsl' script to it and wear it on your LEFT PEC. This attachment listens to the public channel for the NPC's name. For example if your NPC is  named "Foo", the NPC will capture all messages that begin with "Foo " such as "Foo go to theater" will ask the controller to handle them. 
 
-We provide a set of 2 php scripts (index.php, sql.inc.php) and a database schema (schema.sql) that can be used with an external LAMP web server to perform the pathfinding. Upload the scripts to your web server, and edit the database settings. Use the "schema.sql" to create the database. Important: you need to insert a record in the 'city_keys' table for your region amd set the 'ckey' field to something secret. This key must also be the same used in the  BASEURL variable of your controller , which you must also change to point to the URL of your web server.
-
-- To create the appearance notecards for your NPCs, first create a transparent listener object, add the 'listener.lsl' script to it and wear it on your LEFT PEC. This is the listener that listens on the public channels for the npc's name. For example if your NPC is  named "Foo", the NPC will capture all messages that begin with "Foo " such as "Foo go to theater" will ask the controller to handle them. 
-
-- If you want to hide/show attachments, add the 'clotheslistener.lsl' script to your attachments. You will have to customize the "wear"/ "drop" commands on the listener script to tailor to your needs.
 
 - Remember that if you edit any of your attachments, you need to detach and reattach them before saving your appearance. This is required by opensim.
 
-- When your appearance is ready, click on the controller object, select SaveAvi and choose the NPC  whose appearance notecard you want to save.
-- You can now load your NPC by clicking on the controller-> LoadAvi-> select your NPC. Issue some commands to your npc to make sure it works, e.g. "Foo come here" "Foo say something" "Foo follow me"
+- When your appearance is ready, click on the controller object, select SaveNPC to save your appearance to each NPC.
+
+- You can now load your NPC by clicking on the controller-> LoadNPC-> select your NPC name. Issue some commands to your npc to make sure it works, e.g. "Foo come here" "Foo say something" "Foo follow me".
 
 - If you want the NPCs to sit on poseballs use the provided "poseball.lsl" script. The convention is that the poseball's name defines the command. E.g. if your poseball object is named "float", then you can say "Foo do float" to make the NPC sit on it. ("Foo stand up" gets the npc back up)
+
+- If you want your NPCs to be able to interpolate between the points , you have to use an external web server, since LSL is too slow for this (we provide a simplistic interpolation function in the code but it's not used and gets unusably slow for paths that have more than 10 hops). This way, your NPCs can follow commands such as "go to Theater" , which will take them to the theater using the least possible number of hops between waypoints. 
+
+- If you want to hide/show prim or mesh attachments, add the 'clotheslistener.lsl' script to your attachments. You will have to customize the "wear"/ "drop" commands on the listener script to tailor to your needs.
+
+
+We provide a set of 2 php scripts (index.php, sql.inc.php) and a database schema (schema.sql) that can be used with an external LAMP web server to perform the pathfinding. Upload the scripts to your web server, and edit the database settings. Use the "schema.sql" to create the database. Important: you need to insert a record in the 'city_keys' table for your region amd set the 'ckey' field to something secret. This key must also be the same used in the  BASEURL variable of your controller , which you must also change to point to the URL of your web server.
 
 You can easily add your own commands  by extending the "ProcessNPCCommand function in the controller script.
 
