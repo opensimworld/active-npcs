@@ -1,24 +1,12 @@
-/* 
-OpenSimWorld NPC framework
-
-You  can see a demo of this in the OpenSimWorld region
-hypergrid.org:8002:OpenSimWorld
-
-
-This is FREE SOFTWARE 
-
-*/
-
-
-
 integer channel = 68;
 
 
 // Add the first names of your NPCs here. Last name is always "NPC"
-list availableNames = [ "One", "Two", "Three", "Four", "Five"];
+list availableNames = [];//"Kelvin", "Berton", "Sartorius"];
 
 // Change this to the URL of your web server (if you have set up one) and remember to change the cityKey to your own key
-string BASEURL = "http://your-server.com/index.php?ac=1&cityKey=your-key-here&";
+string BASEURL = "http://opensimworld.com/oscity/?ac=1";
+
 
 // These will be loaded from notecards
 list wNodes = [];
@@ -26,56 +14,46 @@ list wLinks = [];
 
 // List of auto-run notecards. The NPC will automatically run the specified notecard when they are in this node
 list wAutorunScripts = [
-33, "gym.scr",
-0, "baths.scr"
+
 ];
 
 
+
 //  list of nodes for the "Flyaround" command
-list flyTargets = [3,5,7, 8, 9, 10, 12,  13, 14, 15, 16, 17, 18, 19, 20, 21 , 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,  35,36,37,38,39,40,41,42,44];
+list flyTargets = [0,1,2,3,4];
 
 
 // Put some animations and add their names here for the "dance" command
 list dance1 = [
-"Modern 01", 
-"Modern 02", 
-"Modern 03", 
-"Modern 04", 
-"Modern 05", 
-"Modern 06", 
-"Modern 07", 
-"Modern 08", 
-"Modern 09", 
-"Modern 10", 
-"Modern 11", 
-"Modern 12", 
-"Modern 13", 
-"Modern 14", 
-"Modern 15", 
-"Modern 16", 
-"Modern 17", 
-"Modern 18", 
-"Modern 19",
-"Modern 20"  
+"rock1", 
+"rock7" 
 ];
 
+list customCommands = ["fuck", "wear", "blow"];
+list notecardScripts;
 
 // Change this to the key of an object used for the "mark" command
 key INDICATOR = "db87ca3d-8403-4c59-bc5e-2e2d31806568";
 
 
-list menuItems = ["SaveAvi", "LoadAvi", "RemoveAvi", "RemoveAll", "Rescan",  "TimerOff", "UploadWP", "UploadLnk", "ReloadMap", "Close"];
+list menuItems = ["SaveNPC", "LoadNPC", "RemoveNPC", "RemoveAll", "LoadAll", "UploadData", "ReConfig","InitCmds",  "DumpData", "TimerOnOff","Close"];
+
+list allowedUsers; 
 
 
 key MAT_KEY = "12e632f9-ac6f-4b38-9f71-630bb47df81d";
 key RUN_CONTROLLER="6649f153-2bbd-48a2-a39d-70342c126176";
 key STADIUM_CONTROLLER="a0887ae1-593e-4660-a4a0-539383218a9a";
+integer TIMER_INTERVAL=5;
 
 string userInputState ="";
+integer greetTime;
 integer gListener;
 integer zListener;
 integer howmany;
 list avis;
+integer curVisitors=1;
+integer deflectToNode = -1;
 
 list aviUids;
 list aviNames;
@@ -93,16 +71,21 @@ list aviScriptIndex;
 list aviScriptText;
 list aviHttpId;
 list aviVar1;
+list scriptVars;
 list aviScriptState;
+list aviWho; // Who they are interacting with
+list aviBotHttp;
+list aviBotConvId;
 integer aviIndex = -1;
 integer a;
 integer b;
 integer animSetCounter =0;
-
+list seenArchive;
 
 list positionsList;
 list greetedAvis;
 integer timerRuns;
+integer timerRunning;
 
 string name;
 
@@ -112,85 +95,226 @@ list candidateNode=[];
 
 list animSets = [] ; // Playing animation sets
 
+key getAgentByName(string firstName)
+{
+        firstName = llToLower(firstName);
+        list ag = osGetAvatarList();
+        integer howmany = llGetListLength(ag);
+        integer i;
+        for (i =0; i < howmany; i+=3)
+        {
+            string name = llList2String(ag, i+2);
+            integer sep = llSubStringIndex(name, " ");
+            if (llToLower(llGetSubString(name, 0,sep-1)) == firstName)
+            {
+                return llList2Key(ag, i);
+            }
+        }
+    return NULL_KEY;            
+}
+
+integer GetScriptVar(string cmd3)
+{
+    integer i;
+    for (i=0; i < llGetListLength(scriptVars); i+=2)
+    {
+        if (llList2String(scriptVars,i) == cmd3 )
+        {
+            return llList2Integer(scriptVars, i+1);
+        }
+    }
+    return 0; // default value;
+}
+
+ReloadConfig()
+{
+    
+    allowedUsers = [(string)llGetOwner(), "59fc25d9-1ce8-4d43-8998-025f84f52b89", "e8c50471-56a7-4bfd-b200-bd7a431e73ba"];
+
+    availableNames = llParseString2List(osGetNotecard("__npc_names"), [" ", "\n", ","] , []);
+    flyTargets = llParseString2List(osGetNotecard("__fly_targets"), [" ", "\n", ","] , []);
+    llOwnerSay("__npc_names: "+llList2CSV(availableNames));
+    string ckey = osGetNotecard("__city_key");
+    BASEURL += "&cityKey="+llStringTrim(ckey, STRING_TRIM)+"&";
+    //llOwnerSay("cityKey="+llStringTrim(ckey, STRING_TRIM));
+    
+    
+    customCommands = [];
+    customCommands = llParseString2List(osGetNotecard("__custom_commands"), [" ","\n",","] , []);
+    llOwnerSay("customCommands="+llList2CSV(customCommands));
+}
+
+
+integer countVisitors()
+{
+    list avis = llGetAgentList(AGENT_LIST_REGION, []);
+    integer howmany = llGetListLength(avis);
+    integer i;
+    integer nNew =0;
+    for ( i = 0; i < howmany; i++ ) {
+        if ( ! osIsNpc(llList2Key(avis, i)) )
+        {
+            nNew++; // only non-NPC's
+            key uu = llList2Key(avis, i);
+            string nm = llKey2Name(uu);
+            if (nm != "")
+            {
+                integer fnd = llListFindList(seenArchive, [nm]);
+                if (fnd >=0)
+                    seenArchive = [] + llListReplaceList(seenArchive, [nm, llGetUnixTime()], fnd, fnd+1);
+                else 
+                    seenArchive = [] + seenArchive  + [nm, llGetUnixTime()];
+            }
+        }
+    }
+    return nNew;
+}
+
+doLoadNPC(string mes)
+{                 
+        integer idx =(GetNPCIndex(mes));
+        if (idx >=0)
+        {
+            llOwnerSay(mes + " is already in region, not loading");
+            osNpcStand(llList2Key(aviUids, idx));
+            return;
+        }
+        key unpc = osNpcCreate(mes, "Aeon(NPC)", llGetPos()+<0,0,3>, "APP_"+llToLower(mes),  OS_NPC_NOT_OWNED | OS_NPC_SENSE_AS_AGENT);
+        if (unpc != NULL_KEY)
+            doAddNpc(mes, unpc);
+}
+
+doAddNpc(string name, string unpc)
+{
+
+        llOwnerSay( "Adding '"+name+"'");
+        aviUids += unpc;
+        aviNames += llToLower(name);
+        aviNodes += 1;
+        aviPrevNodes += 0;
+        aviStatus += "";
+        aviFollow += "";
+        aviTime += 9999;
+        aviDanceAnim += "";
+        aviCurrentAnim += "";
+        aviSearching += "";
+        aviPath += "";
+        aviHttpId += "";
+        aviAlarm += -1;
+        aviScriptIndex += -1;
+        aviScriptText += "";
+        aviVar1 += 0;
+        aviScriptState += "";
+        aviWho += ""; //Key
+        aviBotHttp += "";
+        aviBotConvId += "";
+        osNpcMoveToTarget(unpc, osNpcGetPos(unpc) + <1,0,0>, OS_NPC_NO_FLY );
+}
+
+doRemoveNpc(string who)
+{
+        integer idx = GetNPCIndex(who);
+        if (idx <0) return;
+        
+        key u = llList2Key(aviUids, idx);
+        aviNames =  [] + llDeleteSubList(aviNames, idx, idx);
+        aviUids =  [] + llDeleteSubList(aviUids, idx, idx);
+        aviNodes =  [] + llDeleteSubList(aviNodes, idx, idx);
+        aviPrevNodes = [] + llDeleteSubList(aviNodes, idx, idx);
+        aviFollow = [] + llDeleteSubList(aviFollow, idx, idx); [];
+        aviStatus = [] + llDeleteSubList(aviStatus, idx, idx);
+        aviTime = [] + llDeleteSubList(aviTime, idx, idx);
+        aviDanceAnim = [] + llDeleteSubList(aviDanceAnim, idx, idx);
+        aviCurrentAnim = [] + llDeleteSubList(aviCurrentAnim, idx, idx);
+        aviSearching = [] + llDeleteSubList(aviSearching, idx, idx);
+        aviPath = [] + llDeleteSubList(aviPath, idx, idx);
+        aviHttpId = [] + llDeleteSubList(aviHttpId, idx, idx);
+        aviAlarm = [] + llDeleteSubList(aviAlarm, idx, idx);
+        aviScriptIndex = [] + llDeleteSubList(aviScriptIndex, idx, idx);
+        aviScriptText = [] + llDeleteSubList(aviScriptText, idx, idx);
+        aviVar1 = [] + llDeleteSubList(aviVar1, idx, idx);
+        aviScriptState = [] + llDeleteSubList(aviScriptState, idx, idx);
+        aviWho = [] + llDeleteSubList(aviWho, idx, idx);
+        aviBotHttp = [] + llDeleteSubList(aviBotHttp, idx, idx);
+        aviBotConvId = [] + llDeleteSubList(aviBotConvId, idx, idx);
+       
+        llOwnerSay("Removing "+who + "");
+        osNpcStand(u);
+        osNpcRemove(u);
+}
+
+
+setVar(string cmd2, integer cmd3)
+{
+            integer i;
+            for (i=0; i < llGetListLength(scriptVars); i+=2)
+            {
+                if (llList2String(scriptVars,i) == cmd2)
+                { 
+                    scriptVars = [] + llListReplaceList(scriptVars, [(integer)cmd3], i+1, i+1);
+                    return;
+                }
+            }
+            scriptVars += cmd2;
+            scriptVars += (integer)cmd3;
+}
+
+
 
 integer RescanAvis()
 {
-            aviUids = [];
-            aviNames = [];
-            avis = osGetAvatarList();
-            howmany = llGetListLength(avis);
-            integer i;
-
-            
-            for (i =0; i < howmany; i+=3)
+        avis = osGetAvatarList();
+        howmany = llGetListLength(avis);
+        integer i;
+        for (i =0; i < howmany; i+=3)
+        {
+            if (osIsNpc(llList2Key(avis, i)))
             {
-                if (osIsNpc(llList2Key(avis, i)))
-                {
-                    string nm = llGetSubString(llList2Key(avis, i+2), 0, -5 );
-                    //if (llListFindList(aviUids, [llList2Key(avis, i)]) >=0)
-                    if (0)
-                    {
-                        llOwnerSay("Known " + nm);
-                    }                    
-                    else
-                    {
-
-                        aviUids += llList2Key(avis, i);
-                        aviNames += llToLower(nm);
-                        aviNodes += 8;
-                        aviPrevNodes += 7;
-                        aviStatus += "";
-                        aviFollow += "";
-                        aviTime += 9999;
-                        aviDanceAnim += "";
-                        aviCurrentAnim += "";
-                        aviSearching += "";
-                        aviPath += "";
-                        aviHttpId += "";
-                        aviAlarm += -1;
-                        aviScriptIndex += -1;
-                        aviScriptText += "";
-                        aviVar1 += 0;
-                        aviScriptState += "";
-                        llOwnerSay("Added '"+ nm + "'");
-                    }
-
-                }
+                integer sep = llSubStringIndex(llList2Key(avis, i+2), " ");
+                string nm = llGetSubString(llList2Key(avis, i+2), 0, sep-1 );
+                doAddNpc(nm,  llList2Key(avis, i));
             }
-            llOwnerSay(llList2CSV(aviNames));
-            llOwnerSay(llList2CSV(aviStatus));
-            //Select the first
-            aviIndex = 0;
-            npc = llList2Key(aviUids, 0);
-            return llGetListLength(aviUids);
+        }
+        llOwnerSay(llList2CSV(aviNames));
+        llOwnerSay(llList2CSV(aviStatus));
+        return llGetListLength(aviUids);
 }
 
 
 LoadMapData()
 {
-    integer tl = osGetNumberOfNotecardLines("waypoints");
+    integer tl = osGetNumberOfNotecardLines("__waypoints");
     integer i;
     wNodes = [];
+    wAutorunScripts = [];
     for (i=0; i < tl; i++)
     {
-        string line = osGetNotecardLine("waypoints",i);
-        list tok = llParseString2List(line, [","],"");
+        string line = osGetNotecardLine("__waypoints",i);
+        list tok = llParseStringKeepNulls(line, [","], []);
         float x = llList2Float(tok,0);
         if (x>0)
         {
             vector v = <llList2Float(tok,0), llList2Float(tok,1),llList2Float(tok,2)>;
             wNodes += v;
             wNodes += llList2String(tok,3);
+            if (llStringLength(llList2String(tok,4)))
+            {
+                wAutorunScripts += i;
+                wAutorunScripts += llList2String(tok,4);
+                llOwnerSay("waypoint "+i+ " autorun='"+llList2String(tok,4)+"'");;
+            }
+            
         }
     }
+    llOwnerSay("loaded "+(string)(llGetListLength(wNodes)/2)+" waypoints");
     
     integer tnodes = llGetListLength(wNodes)/2;
     
     wLinks = [];
-    tl = osGetNumberOfNotecardLines("links");
+    tl = osGetNumberOfNotecardLines("__links");
     for (i=0; i < tl; i++)
     {
-        string line = osGetNotecardLine("links",i);
+        string line = osGetNotecardLine("__links",i);
         list tok = llParseString2List(line, [","],"");
         integer a= llList2Integer(tok,0);
         integer b = llList2Integer(tok,1);
@@ -199,26 +323,19 @@ LoadMapData()
             wLinks += [a,b];
         }
     }
-    llOwnerSay((string)wLinks);
+    llOwnerSay("loaded "+(string)(llGetListLength(wLinks)/2)+" links");
 }
 
 
 integer GetNPCIndex(string name) /// name is in lowercase
 {
-    integer i;
-    string ln = llToLower(name);
-    for (i=0; i < llGetListLength(aviNames); i++)
-    {
-        if (llToLower(llList2String(aviNames,i)) == ln)
-            return i;
-    }
-    return -1;
+    return llListFindList(aviNames, [llToLower(name)]);
 }
 
 
 integer GetWalkTime(float distance)
 {
-    return llCeil(distance / 3.3);
+    return llCeil(distance / 2.0);
 }
 
 integer GetNearestNode(vector pos)
@@ -237,6 +354,7 @@ integer GetNearestNode(vector pos)
     }
     return l/2;
 }
+
 
 
 
@@ -320,17 +438,10 @@ string GetGotoPath(integer nodeA, integer nodeB)
 }
 
 
-integer GetNPCIndexByUid(key name) /// name is in lowercase
+integer GetNPCIndexByUid(key name)
 {
-    integer i;
-    for (i=0; i < llGetListLength(aviUids); i++)
-    {
-        if (llList2String(aviUids,i) == (name))
-            return i;
-    }
-    return -1;
+    return llListFindList(aviUids, [name]);
 }
-
 
 
 
@@ -352,13 +463,44 @@ integer FindScriptLineAfter(string scriptData, string lineToFind, integer afterL
     for  (endIdx = afterLine+1;endIdx < llGetListLength(scriptLines); endIdx++)
     {
         line = llList2String(scriptLines, endIdx);
-        if (llToLower(line) == toFind)
+        if (llStringTrim(line, STRING_TRIM) == toFind)
         {
             foundLine =endIdx;
             jump _foundIdxOut;
         }
     }
     @_foundIdxOut;
+    return foundLine;
+}
+
+
+integer FindMatchingEndif(string scriptData, integer afterLine)
+{
+    integer endIdx;
+    list scriptLines = llParseStringKeepNulls(scriptData, ["\n",";"], []);
+    string toFind = "end-if";
+    integer foundLine = -1;
+    string line;
+    integer ifLevel=1;
+    for  (endIdx = afterLine+1;endIdx < llGetListLength(scriptLines); endIdx++)
+    {
+        line = llStringTrim(llList2String(scriptLines, endIdx), STRING_TRIM);
+        //llOwnerSay("chk '"+llGetSubString(line, 0, 2)+"'");
+        if (llGetSubString(line, 0, 1) == "if")
+        {
+            ifLevel++;
+        }
+        else if (line == "end-if")
+        {
+            ifLevel--;
+            if (ifLevel==0)
+            {
+                foundLine =endIdx;
+                jump _foundEIIdxOut;
+            }
+        }
+    }
+    @_foundEIIdxOut;
     return foundLine;
 }
 
@@ -370,7 +512,7 @@ integer GetNodeIndexByName(string nodeName)
     {
         if (llToLower(llList2String(wNodes, i+1)) == nodeName)
         {
-            return i;
+            return i/2;
         }
     }
     return -1;
@@ -378,9 +520,22 @@ integer GetNodeIndexByName(string nodeName)
 
 SetScriptAlarm(integer aviId, integer time)
 {
-    aviAlarm = llListReplaceList(aviAlarm, [llGetUnixTime() + time], aviId, aviId);
+    aviAlarm = [] + llListReplaceList(aviAlarm, [llGetUnixTime() + time], aviId, aviId);
 }
 
+
+doStopNpc(integer idx, key uNPC)
+{
+    aviStatus = [] + llListReplaceList(aviStatus, [""], idx, idx);
+    aviTime = [] + llListReplaceList(aviTime, [0], idx, idx);
+    SetScriptAlarm(idx, 30);
+    string old_anim =  llList2String(aviDanceAnim, idx);
+    list anToStop=llGetAnimationList(uNPC);
+    integer stop=llGetListLength(anToStop);
+    while (--stop>=0) { osNpcStopAnimation(uNPC,llList2Key(anToStop,stop)); }
+    osNpcStopMoveToTarget(uNPC);
+    osNpcStand(uNPC);
+}
 
 
 
@@ -391,18 +546,12 @@ integer ProcessNPCCommand(list tokens)
     string sendUid = llList2String(tokens,1);
     string npcName = llToLower(llList2String(tokens,2));
     string name2 = llToLower(llList2String(tokens,3));
-    
-    //integer nmend = llSubStringIndex(mes, " ");
-    //if  (nmend <0 || nmend > 50) return 0;
-    //string npcName = llGetSubString(mes, 37, nmend-1);
-    
-    
-    //llOwnerSay("NPCNAME='"+npcName+"'");
+
     
     integer idx = GetNPCIndex(npcName);
     if (idx <0)
     {
-        return 3;
+        return 1;
     }
     key uNPC= llList2Key(aviUids, idx);
     if (uNPC == NULL_KEY)
@@ -410,223 +559,44 @@ integer ProcessNPCCommand(list tokens)
         return 1;
     }
     
+    
+    if (sendUid != "0000")
+    {
+        // A human has given us a command - stop whatever we are doing
+        //aviScriptIndex = []+llListReplaceList(aviScriptIndex, [-1], idx, idx);
+    }
+    
     string cmd1= llList2String(tokens,4);
     string cmd2= llList2String(tokens,5);
     
-    list userData = llGetObjectDetails((key)sendUid, [OBJECT_NAME,OBJECT_POS, OBJECT_ROT]);
-    
-    string org = llList2String(userData, 0);
-
-    if (name2 != npcName)
+    list userData;
+    if (cmd1 == "stop")
     {
-        if (name2 == "hello" || name2 == "hi")
-        {
-            osNpcSay(uNPC, "Hello, if you need help say '"+npcName+" help'");
-            return 1;
-        }
-    }
-    else if (cmd1 == "follow")
-    {
-        aviStatus = llListReplaceList(aviStatus, ["follow"], idx, idx);
-        if (cmd2=="me" || cmd2=="")
-        {
-            aviFollow = llListReplaceList(aviFollow, [(key)sendUid], idx, idx);
-            osNpcSay(uNPC, "Following you Sir "+ llList2String(userData, 0));
-        }
-        else
-        {
-            list ag = osGetAvatarList();
-            integer howmany = llGetListLength(ag);
-            integer i;
-            for (i =0; i < howmany; i+=3)
-            {
-                string name = llList2String(ag, i+2);
-                integer sep = llSubStringIndex(name, " ");
-                if (llToLower(llGetSubString(name, 0,sep-1)) == llToLower(cmd2))
-                {
-                    aviFollow = llListReplaceList(aviFollow, [llList2Key(ag, i)], idx, idx);
-                    osNpcSay(uNPC, "Following " + name);
-                }
-            }
-        }
-
-    }
-    else if (cmd1 == "set-state") // set a variable that indicates the current state of an NPC -- useful for scripts
-    {
-        aviScriptState= llListReplaceList(aviScriptState, [cmd2], idx, idx);
-    }
-    else if (cmd1 == "var1") // Do something on the counter var1
-    {
-            if (cmd2 == "++" || cmd2 == "--")
-            {
-                integer var1 = llList2Integer(aviVar1, idx);
-                if (cmd2 == "--") --var1;
-                else ++var1;
-                aviVar1= llListReplaceList(aviVar1, [var1], idx, idx);
-            }
-            else if (cmd2 == "zero")
-            {
-                aviVar1= llListReplaceList(aviVar1, [0], idx, idx);
-            }
-            else
-                llOwnerSay("Unknown: "+ cmd2);
-    }
-    else if (cmd1 == "fly" && cmd2=="with")  // "fly with me" "fly with Foo"
-    {
-        string who = llList2String(tokens, 6);
-        if (who == "me")
-        {
-            aviFollow = llListReplaceList(aviFollow, [(key)sendUid], idx, idx);
-        }
-        else
-        {
-            list ag = osGetAvatarList();
-            integer howmany = llGetListLength(ag);
-            integer i;
-            for (i =0; i < howmany; i+=3)
-            {
-                string name = llList2String(ag, i+2);
-                integer sep = llSubStringIndex(name, " ");
-                if (llToLower(llGetSubString(name, 0,sep-1)) == llToLower(who))
-                {
-                    aviFollow = llListReplaceList(aviFollow, [llList2Key(ag, i)], idx, idx);
-                    osNpcSay(uNPC, "Following " + name);
-                    jump _foundflyfollow;
-                }
-            }
-        }
-        @_foundflyfollow;
-        
-        aviStatus = llListReplaceList(aviStatus, ["flyfollow"], idx, idx);
-        osNpcSay(uNPC, "Flying ");
-
-    }
-    else if (cmd1 == "help")
-    {
-        osNpcSay(uNPC, "Say '"+ npcName+ " <command>', where <command> can be: 'follow me', 'fly with me', 'do', 'go to', 'wear', 'drop', 'dance', 'stand up', 'stop', 'light', 'leave'.");
-    }
-    else if (cmd1 == "leave")
-    {
-        // Start wandering between waypoints
-        aviNodes = llListReplaceList(aviNodes, [GetNearestNode(osNpcGetPos(uNPC))], idx, idx);
-        aviStatus = llListReplaceList(aviStatus, ["wander"], idx, idx);
-        string nm = llList2String(userData, 0);
-        osNpcSay(uNPC, "OK, goodbye sir!");
-
-    }
-    else if (cmd1 == "positioner")
-    {
-        llRegionSay(78, ""+(string)idx + " setpos " + (string)osNpcGetPos(uNPC) + " " + (string)osNpcGetRot(uNPC));
-    }
-    else if (cmd1 == "animset")
-    {
-        // try to play an animation set from the notecard with this NPC as the first avi
-        vector basePos = osNpcGetPos(uNPC);
-        string animset = llToLower(cmd2);
-        integer tl = osGetNumberOfNotecardLines("animsets");
-        integer i;
-        for (i=0; i < tl; i++)
-        {
-            list animtoks = llParseString2List(osGetNotecardLine("animsets", i), [" "] , []);
-            
-            if (llToLower(llList2String(animtoks,0)) == animset)
-            {
-                integer j;
-                animSetCounter++;
-                vector pos = llGetPos();
-                integer channel = 600+animSetCounter;
-                integer posInSet =0;
-                for (j=1; j < llGetListLength(animtoks); j+= 3)
-                {
-                    
-                    //llRezObject("positioner", pos+<j*0.3,0,0>, <0,0,0>, <0,0,0>, channel*100 + posInSet);
-                    posInSet++;
-                }
-                llSleep(1);
-                posInSet =0;
-                vector ref = ZERO_VECTOR;
-                for (j=1; j < llGetListLength(animtoks); j+= 3)
-                {
-                    string animname = llList2String(animtoks,j);
-                    vector v = (vector)llList2String(animtoks,j+1);
-                    rotation rot = (rotation)llList2String(animtoks,j+2);
-                    
-                    if (ref == ZERO_VECTOR)
-                    {
-                        ref = v;
-                        ref.z = 0;
-                    }
-                    v -= ref;
-                    llRegionSay(channel, (string)posInSet+" params "+(string)v+" " + (string)rot+ " "+ animset);
-                    posInSet++;
-                }
-                
-                jump _afterAnimFound;
-            }
-        }
-        
-        @_afterAnimFound;
-        
-    }
-    else if (cmd1 == "flyaround")
-    {
-        // Start flying about between the waypoints in the "flyTargets" list -- useful for birds
-        aviStatus = llListReplaceList(aviStatus, ["godfly"], idx, idx);
-        string nm = llList2String(userData, 0);
-        osNpcSay(uNPC, "Flying like an eagle!!");
-
-    }
-    else if (cmd1 == "dance")
-    {
-        //Drop a few dance animations in the controller object and change the "dance1" list at the top. This will start cycling the dances
-
-        aviStatus = llListReplaceList(aviStatus, ["dance"], idx, idx);
-        osNpcSay(uNPC, "Oh, with pleasure Sir!");
-        aviTime = llListReplaceList(aviTime, [0], idx, idx);        
-        osNpcStand(uNPC);
-        string old_anim = llList2String(aviDanceAnim, idx);
-        osNpcStopAnimation(uNPC, old_anim);
-    }
-    else if (cmd1 == "stop")
-    {
-        // Stand up and stop  all animations
-        aviStatus = llListReplaceList(aviStatus, [""], idx, idx);
-        //osNpcSay(uNPC, "OK sir!");
-        aviTime = llListReplaceList(aviTime, [0], idx, idx);
-        string old_anim = llList2String(aviDanceAnim, idx);
-        osNpcStopAnimation(uNPC, llList2String(aviCurrentAnim, idx));
-        integer d;
-        for  (d=0; d < llGetListLength(dance1); d++)
-        {
-            osNpcStopAnimation(uNPC, llList2String(dance1, d));
-        }
-        osNpcStopMoveToTarget(uNPC);
-        osNpcStand(uNPC);
-        osSetSpeed(uNPC, 1.0);
+        doStopNpc(idx, uNPC);
     }
     else if (cmd1 == "come")
     {
         
         // "Come here"
-        osNpcStand(uNPC);
-        osNpcStopMoveToTarget(uNPC);
-        osTeleportAgent(uNPC, llList2Vector(userData, 1) + <1, 0, 0>
-, <1,1,1>);
+        doStopNpc(idx, uNPC);
+        userData=llGetObjectDetails((key)sendUid, [OBJECT_NAME,OBJECT_POS, OBJECT_ROT]);
+        osTeleportAgent(uNPC, llList2Vector(userData, 1) + <1, 0, 0>, <1,1,1>);
+        //osNpcMoveTo(uNPC, llList2Vector(userData, 1) + <1, 0, 0>);
         osNpcSay(uNPC, "Coming right over Sir!");
 
     }
     else if (cmd1 == "stand")
     {
         // Stand up
-        aviStatus = llListReplaceList(aviStatus, [""], idx, idx);
+        aviStatus =  []+llListReplaceList(aviStatus, [""], idx, idx);
         osNpcStand(uNPC);
         osNpcStopMoveToTarget(uNPC);
     }
-    else if (cmd1 == "moveto" || cmd1 == "movetov" || cmd1 == "runtovr")
+    else if (cmd1 == "moveto" || cmd1 == "movetov" || cmd1 == "runtovr"|| cmd1 == "movetovr" || cmd1 == "flytov")
     {
         // Walk to the specified waypoint or vector
         vector v;
-        if  (cmd1 == "runtovr")
+        if  (cmd1 == "runtovr"||cmd1 == "movetovr")
         {
             // run to somewhere within the volume enclosed by v1 and v2
             vector v1 = (vector) cmd2;
@@ -635,8 +605,15 @@ integer ProcessNPCCommand(list tokens)
             v.y= v1.y + llFrand(v2.y-v1.y);
             v.z= v1.z + llFrand(v2.z-v1.z);
         }
-        else if (cmd1 == "movetov" || cmd1 == "runtovr")
+        else if (cmd1 == "movetov" || cmd1 == "flytov" )
+        {
             v = (vector)cmd2;
+            if (v == ZERO_VECTOR)
+            {
+                llOwnerSay(npcName + ": "+cmd2+" is not a good position. I am not going there!");
+                return 1;
+            }
+        }
         else
             v = llList2Vector(wNodes, 2*(integer)cmd2);
         
@@ -644,7 +621,6 @@ integer ProcessNPCCommand(list tokens)
         
         if (cmd1 == "runtovr")
         {
-
             osNpcMoveToTarget(uNPC, v + <0,0,1>, OS_NPC_NO_FLY | OS_NPC_RUNNING);
             SetScriptAlarm(idx, (integer)(GetWalkTime(dist)/2.0));
         }
@@ -652,25 +628,76 @@ integer ProcessNPCCommand(list tokens)
         {
             osNpcStand(uNPC); 
             osNpcStopMoveToTarget(uNPC);
-            osNpcMoveToTarget(uNPC, v + <0,0,1>, OS_NPC_NO_FLY );
+            osSetSpeed(uNPC, 0.5);
+            if (cmd1 == "flytov")
+                osNpcMoveToTarget(uNPC, v + <0,0,1>, OS_NPC_FLY );
+            else
+                osNpcMoveToTarget(uNPC, v + <0,0,1>, OS_NPC_NO_FLY);
             SetScriptAlarm(idx, GetWalkTime(dist));
         }
-        
-        
     }
-    else if (cmd1 == "if" || cmd1 == "if-not")
+    else if (cmd1 == "setvar")
+    {
+            string cmd3 = llList2String(tokens,6);
+            setVar(cmd2, (integer)cmd3);
+            return 0;
+    }
+    else if (cmd1 == "if" || cmd1 == "if-not" || cmd1=="if-prob")
     {
         // Only 1 level of ifs is supported
         // must be followed by 'end-if'
         integer res = 0;
-        if (cmd2 == "name-is")
+        if (cmd1 == "if-prob")
+        {
+            if (llFrand(1.0)<(float)cmd2)
+                res = 1;
+        }
+        else if (cmd2 == "name-is")
         {
             integer k;
+            res=0;
             for (k=6; k < llGetListLength(tokens); k++)
             {
                 if (llToLower(npcName) == llToLower(llList2String(tokens,k)))
+                {
                     res=1;
+                }
             }
+        }
+        else if (cmd2 == "is-here")
+        {
+            integer curNode = llList2Integer(aviNodes,idx);
+            integer k;
+            res=1;
+            for (k=6; k < llGetListLength(tokens); k++)
+            {
+                    integer nwho = GetNPCIndex(llList2String(tokens,k));
+                    if (nwho<0 || llList2Integer(aviNodes, nwho) != curNode)
+                    {
+                        res=0;
+                        jump isHereNotFound;
+                    }
+            }
+            @isHereNotFound;
+        }
+        else if (cmd2 == "var-is")
+        {
+            integer k;
+            res=0;
+            for (k=6; k < llGetListLength(tokens); k+=2)
+            {
+                string nm = llList2String(tokens,k);
+                if (nm == "")  jump varIsBreak;
+                string val = llList2String(tokens,k+1);
+                if (GetScriptVar(nm) == (integer)val)
+                        res =1;
+                else 
+                {
+                    res=0;
+                    jump varIsBreak;
+                }
+            }
+            @varIsBreak;
         }
         else if (cmd2 == "state-is")
         {
@@ -681,7 +708,7 @@ integer ProcessNPCCommand(list tokens)
                 string what = llList2String(aviScriptState,nwho);
                 integer k;
                 for (k=7; k < llGetListLength(tokens); k++)
-                {v
+                {
                     if (what == llList2String(tokens,k))
                                       res=1;
                 }
@@ -697,7 +724,6 @@ integer ProcessNPCCommand(list tokens)
             else if (cmd2=="var1-lt" && var1  < val) res=1;
             else if (cmd2=="var1-eq" && var1 == val) res=1;
         }
-        
         if (cmd1 == "if-not")
             res = !res;
             
@@ -709,22 +735,24 @@ integer ProcessNPCCommand(list tokens)
 
         if (!res)
         {
-           
-            integer foundLine = FindScriptLineAfter(llList2String(aviScriptText,idx), "end-if", scrline);
+            integer foundLine = FindMatchingEndif(llList2String(aviScriptText,idx), scrline-1); /// this used to skip a line
+            //llOwnerSay("End-if found: "+(string)foundLine);
             if (foundLine == -1)
             {
-                llOwnerSay("Error: end-if not found near "+cmd1 + " "+cmd2 + "...");
+                llOwnerSay("Error: end-if not found afterr "+cmd1 + " "+cmd2 + "...");
             }
             else
             {
-                aviScriptIndex  = llListReplaceList(aviScriptIndex, [foundLine], idx, idx);
+                aviScriptIndex  =  []+llListReplaceList(aviScriptIndex, [foundLine+1], idx, idx);// Go past the end-if -- runs notecards faster 
             }
         }
-
+        return 0;
     }
     else if (cmd1 == "end-if")
     {
         // Do nothing
+        //llOwnerSay("Endif");
+        return 0;
     }
     else if (cmd1 == "jump")
     {
@@ -736,8 +764,25 @@ integer ProcessNPCCommand(list tokens)
         }
         else
         {
-            aviScriptIndex  = llListReplaceList(aviScriptIndex, [foundLine], idx, idx);
+            aviScriptIndex  = []+llListReplaceList(aviScriptIndex, [foundLine], idx, idx);
         }
+        return 0;
+    }
+    else if (cmd1 == "summon")
+    {
+            string where = cmd2 ;
+            //llToLower(llStringTrim(llList2String(tokens,6) +" "+ llList2String(tokens,7) +" "+ llList2String(tokens,8), STRING_TRIM));        
+            integer widx = llListFindList(wNodes, [cmd2]);
+            if (widx>=0)
+            {
+                aviScriptIndex  = []+llListReplaceList(aviScriptIndex, [-1], idx, idx);
+                aviNodes = []+llListReplaceList(aviNodes, [widx/2], idx, idx);
+                aviStatus = []+llListReplaceList(aviStatus, ["wander"], idx, idx);
+                osNpcStand(uNPC);
+                osNpcStopMoveToTarget(uNPC);
+                osTeleportAgent(uNPC, llList2Vector(wNodes, widx+1), <0,0,0>);
+                SetScriptAlarm(idx, -10000);
+            }
     }
     else if ((cmd1 == "go" && cmd2 == "to")   || cmd1 == "goto")
     {
@@ -766,11 +811,11 @@ integer ProcessNPCCommand(list tokens)
                     if (llToLower(llList2String(wNodes,i+1)) == where)
                     {
                         foundId = (integer)i/2;
-                        jump fbreak;
+                        jump gotoCmdBreak;
                     }
                 }
             }
-            @fbreak;
+            @gotoCmdBreak;
             if (foundId <0)
             {
                     osNpcSay(uNPC, "Sorry i dont know how to get to the "+where+ "");
@@ -791,14 +836,35 @@ integer ProcessNPCCommand(list tokens)
         SetScriptAlarm(idx, 999); /// Set script  alarm far to the future - the alarm will be set back when the avi arrives at the destination
         string url=BASEURL+"act=getPath&src="+nearest+"&tgt="+foundId;
         key httpid = llHTTPRequest(url, [], "");
-        aviStatus = llListReplaceList(aviStatus, ["http-"+httpid], idx, idx);
+        aviStatus = []+ llListReplaceList(aviStatus, ["http-"+httpid], idx, idx);
         llOwnerSay("Sending out /"+url+"/");
         
     }
+    else if (cmd1 == "waitvar")
+    {
+            // Wait until the value of variable named cmd2 reaches the value cmd3
+            string cmd3 = llList2String(tokens,6);
+            if (GetScriptVar(cmd2) == (integer)cmd3)
+            {
+                    return 1; /// OK continue with the next line
+            }
+
+            integer scriptIndex = llList2Integer(aviScriptIndex, idx);
+            if  (scriptIndex>0)
+            {
+                aviScriptIndex = []+llListReplaceList(aviScriptIndex, [scriptIndex-1], idx, idx);
+            }
+    }
     else if (cmd1 == "wait")
     {
-        // cause the script to wait for <arg> seconds 
-        SetScriptAlarm(idx, (integer) cmd2);
+        // cause the script to wait for <arg> (to optionally arg3) seconds
+        integer tm = (integer)cmd2;
+        integer tm2 = (integer)llList2String(tokens,6);
+        if (tm2>0)
+        {
+            tm = (integer)(tm + llFrand(tm2));
+        } 
+        SetScriptAlarm(idx,  tm);
     }
     else if (cmd1 == "say")
     {
@@ -809,10 +875,26 @@ integer ProcessNPCCommand(list tokens)
             txt += llList2String(tokens,i) + " ";
         osNpcSay(uNPC, txt);
     }
+    else if (cmd1 == "saych")
+    {
+        // Say something on chat
+        string txt = "";
+        integer i;
+        for (i=6; i < llGetListLength(tokens); i++)
+            txt += llList2String(tokens,i) + " ";
+        osNpcSay(uNPC,  llList2Integer(tokens,5), txt);
+    }
+    else if (cmd1 == "exec")
+    {
+        list tok2 = ["!", "0000", cmd2] + llList2List(tokens, 5, -1);
+        //llOwnerSay("String="+llList2CSV(tok2));
+        ProcessNPCCommand(tok2);
+    }
     else if (cmd1 == "mark")
     {
         // Move the indicator object to the specified waypoint (used for debugging the map)
         integer l=0;
+        userData=llGetObjectDetails((key)sendUid, [OBJECT_NAME,OBJECT_POS, OBJECT_ROT]);
         if (cmd2 == "nearest")
         {
             vector pos = llList2Vector(userData, 1);
@@ -829,29 +911,35 @@ integer ProcessNPCCommand(list tokens)
         //llOwnerSay("Getting "+uNPC+ " " + cmd2);
         osMessageAttachments(uNPC, "penis-"+cmd2, [ATTACH_PELVIS], 0);
     }
-    else if (cmd1 == "wear" || cmd1 == "drop")
+    else if (cmd1 == "msgatt")
     {
-        // Hide or show clothes. You want to customize this for 
-        // your own set of garments
-        string what = cmd2;
-        string com = "show";
-        if (cmd1== "drop")
-            com = "hide";
-        
-        if (what == "helmet")
-            osMessageAttachments(uNPC, com, [ATTACH_HEAD], 0);
-        else if (what == "shield")
-            osMessageAttachments(uNPC, com, [ATTACH_LHAND], 0);
-        else if (what == "spear")
-            osMessageAttachments(uNPC, com, [ATTACH_RHAND], 0);
-        else if (what == "chiton" || what == "toga") 
-            osMessageAttachments(uNPC, com, [ATTACH_CHEST, ATTACH_PELVIS], 0);
-        else if (what == "arms")
+
+        list points = [];
+        integer i;
+        for (i=6; i < llGetListLength(tokens); i++)
         {
-           osMessageAttachments(uNPC, com, [ATTACH_LHAND, ATTACH_RHAND, ATTACH_HEAD], 0);
+            if (llList2Integer(tokens, i)>0)
+            {
+                points += llList2Integer(tokens,i);
+            }
         }
-        else
-            osNpcSay(uNPC, "Say '"+npcName+" "+cmd1+" <item>', <item> can be: helmet, shield, spear, chiton, arms");
+        //llOwnerSay("msg="+cmd2+" points="+llList2CSV(points));
+        osMessageAttachments(uNPC, cmd2, points, 0);
+    }
+    else if (cmd1 == "teleport")
+    {
+        vector w = (vector) cmd2;
+        if (w == ZERO_VECTOR)
+        {
+            integer where = GetNodeIndexByName(cmd2);
+            if (where >=0)
+            {
+                w = llList2Vector(wNodes, where*2);
+                osTeleportAgent(uNPC, w, <0,0,0>);
+                //osNpcMoveTo(uNPC, w);
+            }
+        }
+        else osTeleportAgent(uNPC, w, <0,0,0>);
     }
     else if (cmd1 == "do")
     {
@@ -868,13 +956,22 @@ integer ProcessNPCCommand(list tokens)
     }
     else if  (cmd1 == "lookat")
     {
-        vector v = (vector)cmd2;
-        if  (v == ZERO_VECTOR)
+        vector v;
+        if (cmd2=="me")
         {
-            integer midx = GetNodeIndexByName(llToLower(cmd2));
-            if (midx >=0)
+            userData=llGetObjectDetails((key)sendUid, [OBJECT_NAME,OBJECT_POS, OBJECT_ROT]);
+            v = llList2Vector(userData,1);
+        }
+        else
+        {
+            v = (vector)cmd2;
+            if  (v == ZERO_VECTOR)
             {
-                v = llList2Vector(wNodes, midx);
+                integer midx = GetNodeIndexByName(llToLower(cmd2));
+                if (midx >=0)
+                {
+                    v = llList2Vector(wNodes, midx*2);
+                }
             }
         }
         osNpcSetRot(uNPC, llRotBetween(<1,0,0>, v-osNpcGetPos(uNPC)));//llEuler2Rot(<0,0,ang>)); 
@@ -899,40 +996,222 @@ integer ProcessNPCCommand(list tokens)
     {
         // Run multiple commands from the chat, separated by ";"   --- replaces any running script
         string str = llDumpList2String(llList2List(tokens, 5, llGetListLength(tokens))," ");
-        aviScriptText = llListReplaceList(aviScriptText, str, idx, idx);
-        aviScriptIndex = llListReplaceList(aviScriptIndex, [1], idx, idx);
+        aviScriptText =  []+llListReplaceList(aviScriptText, str, idx, idx);
+        aviScriptIndex =  []+llListReplaceList(aviScriptIndex, [1], idx, idx);
         SetScriptAlarm(idx, 0);
+    }
+    else if (cmd1 == "forcesit")
+    {
+        osForceOtherSit((key)cmd2, (key)llList2String(tokens, 6));
+    }
+    else if (cmd1 == "unsit")
+    {
+        llUnSit((key)cmd2);
+    }
+    else if (cmd1 == "moveprim")
+    {
+        osMessageObject((key)cmd2, "SETPOS "+(llList2String(tokens,6)) + " "+llList2String(tokens,7));
+        //osSetPrimitiveParams((key)cmd2, [PRIM_POSITION, (vector)llList2String(tokens,6)]);
+    }
+    else if (cmd1 == "follow")
+    {
+        aviStatus =  []+llListReplaceList(aviStatus, ["follow"], idx, idx);
+        if (cmd2=="me" || cmd2=="")
+        {
+            
+            userData=llGetObjectDetails((key)sendUid, [OBJECT_NAME,OBJECT_POS, OBJECT_ROT]);
+            aviFollow =  []+llListReplaceList(aviFollow, [(key)sendUid], idx, idx);
+            osNpcSay(uNPC, "Following you Sir "+ llList2String(userData, 0));
+        }
+        else
+        {
+            key who = getAgentByName(cmd2);
+            if (who != NULL_KEY)
+            {
+                    aviFollow =  []+llListReplaceList(aviFollow, [who], idx, idx);
+                    osNpcSay(uNPC, "Following " + cmd2);
+            }
+        }
 
+    }
+    else if (cmd1 == "set-state") // set a variable that indicates the current state of an NPC -- useful for scripts
+    {
+        aviScriptState=  []+llListReplaceList(aviScriptState, [cmd2], idx, idx);
+        return 0;
+    }
+    else if (cmd1 == "debug")
+    {
+        integer dd = llList2Integer(aviScriptIndex, idx);
+        string scr;
+        if  (dd >=0)
+        {
+            scr = GetScriptLine(llList2String(aviScriptText,idx) , dd);
+        }
+        llOwnerSay("Status="+llList2String(aviStatus, idx)+" node = "+llList2Integer(aviNodes, idx)+
+            " follow="+llList2String(aviFollow, idx)+" Alarm = "+(string)(llList2Integer(aviAlarm,idx)-llGetUnixTime())+
+            " scriptIndex="+llList2Integer(aviScriptIndex, idx)+" scriptText " +scr );
+    
+
+    }
+    else if (cmd1 == "var1") // Do something on the counter var1
+    {
+            if (cmd2 == "++" || cmd2 == "--")
+            {
+                integer var1 = llList2Integer(aviVar1, idx);
+                if (cmd2 == "--") --var1;
+                else ++var1;
+                aviVar1=  []+llListReplaceList(aviVar1, [var1], idx, idx);
+            }
+            else if (cmd2 == "zero")
+            {
+                aviVar1=  []+llListReplaceList(aviVar1, [0], idx, idx);
+            }
+            else
+                llOwnerSay("Unknown: "+ cmd2);
+    }
+    else if (cmd1 == "fly" && cmd2=="with")  // "fly with me" "fly with Foo"
+    {
+        string who = llList2String(tokens, 6);
+        if (who == "me")
+        {
+            aviFollow =  []+llListReplaceList(aviFollow, [(key)sendUid], idx, idx);
+        }
+        else
+        {
+            key w = getAgentByName(who);
+            if (w != NULL_KEY)
+            {
+                aviFollow =  []+llListReplaceList(aviFollow, [w], idx, idx);
+
+            }
+        }
+        aviStatus = llListReplaceList(aviStatus, ["flyfollow"], idx, idx);
+        osNpcSay(uNPC, "Flying ");
+    }
+    else if (cmd1 == "help")
+    {
+        osNpcSay(uNPC, "Say '"+ npcName+ " <command>', where <command> can be: 'follow me', 'fly with me', 'do', 'go to', 'wear', 'drop', 'dance', 'stand up', 'stop', 'light', 'leave'.");
+    }
+    else if (cmd1 == "leave")
+    {
+        // Start wandering between waypoints
+        osNpcStand(uNPC);
+        aviNodes =  []+llListReplaceList(aviNodes, [GetNearestNode(osNpcGetPos(uNPC))], idx, idx);
+        aviStatus =  []+llListReplaceList(aviStatus, ["wander"], idx, idx);
+    }
+    else if (cmd1 == "flyaround")
+    {
+        // Start flying about between the waypoints in the "flyTargets" list -- useful for birds
+        aviStatus =  []+llListReplaceList(aviStatus, ["godfly"], idx, idx);
+        osNpcSay(uNPC, "Flying like an eagle!!");
+
+    }
+    else if (cmd1 == "dance")
+    {
+        //Drop a few dance animations in the controller object and change the "dance1" list at the top. This will start cycling the dances
+
+        aviStatus =  []+llListReplaceList(aviStatus, ["dance"], idx, idx);
+        osNpcSay(uNPC, "Oh, with pleasure Sir!");
+        aviTime =  []+llListReplaceList(aviTime, [0], idx, idx);        
+        osNpcStand(uNPC);
+        string old_anim = llList2String(aviDanceAnim, idx);
+        osNpcStopAnimation(uNPC, old_anim);
     }
     else if (cmd1 == "run-notecard")
     {
         // Run the script contained in the notecard <argument>
         string stext= osGetNotecard(cmd2 );
-        aviStatus= llListReplaceList(aviStatus, "", idx, idx);
+        aviStatus=  []+llListReplaceList(aviStatus, "", idx, idx);
         if (stext == "")
         {
             osNpcSay(uNPC,"Could not load notecard '"+cmd2+"'");
             return 1;
         }
-        aviScriptText = llListReplaceList(aviScriptText, stext, idx, idx);
-        aviScriptIndex = llListReplaceList(aviScriptIndex, [1], idx, idx);
+        aviScriptText =  []+llListReplaceList(aviScriptText, stext, idx, idx);
+        aviScriptIndex =  []+llListReplaceList(aviScriptIndex, [1], idx, idx);
         SetScriptAlarm(idx, 0);
     }
     else if (cmd1 == "stop-script")
     {
         // Stop executing the script and exit
-        aviScriptIndex = llListReplaceList(aviScriptIndex, [-1], idx, idx);
+        aviScriptIndex =  []+llListReplaceList(aviScriptIndex, [-1], idx, idx);
         SetScriptAlarm(idx, 0);
+    }
+    else if (cmd1 == "dress")
+    {
+        string suff = "";
+        if (cmd2 != "") suff += "_"+cmd2;
+        string nm = llList2String(aviNames, idx);
+        llOwnerSay("Loading appearance "+"APP_"+nm+suff);
+        osNpcLoadAppearance(uNPC, "APP_"+nm+suff);
+    }
+    else if (cmd1 == "seen")
+    {
+        integer i;
+        if (cmd2 == "all")
+        {
+            for (i=0; i < llGetListLength(seenArchive); i+=2)
+                osNpcSay(uNPC, "I saw "+ llList2String(seenArchive,i) + "  "  + TimeAgo(llList2Integer(seenArchive,i+1) ));
+            return 1;
+        }
+        else
+        {
+            for (i=0; i < llGetListLength(seenArchive); i+=2)
+            {
+                if (llSubStringIndex(llToLower(llList2String(seenArchive,i)), llToLower(cmd2))>=0)
+                {
+                    osNpcSay(uNPC, "I saw "+ llList2String(seenArchive,i) + " around "  + TimeAgo(llList2Integer(seenArchive,i+1) ));
+                    return 1;
+                }
+            }
+        }
+        osNpcSay(uNPC, "I haven't seen "+ cmd2 + " around");
+    }
+    else if (cmd1 == "clothing")
+    {
+        
+        osMessageAttachments(uNPC, cmd2, [ATTACH_AVATAR_CENTER], 0); 
     }
     else if (llGetSubString(cmd1,0,0) == "@")
     {
         // It's a label; do nothing
+        return 0;
     }
     else
     {
-        osNpcSay(uNPC, "I do not know how to "+cmd1+". Say '"+npcName+" help' for more");
+        integer nc = llListFindList(customCommands, [llToLower(cmd1)]);
+        if (nc>=0)
+        {    
+            aviStatus = [] + llListReplaceList(aviStatus, [""], idx, idx);
+            llMessageLinked(LINK_ALL_CHILDREN, 0, llList2CSV(tokens), uNPC);
+        }
+        else 
+        {
+            
+             // have we started a conversation yet?
+             key conversationRequest;
+             string programoURL="http://hookkk.com/chatbot/chatbot/conversation_start.php?say=";
+             
+             string message = llDumpList2String(llList2List(tokens, 4, llGetListLength(tokens))," ");
+             
+             string conversationID = llList2String(aviBotConvId, idx);
+             if (conversationID == "")
+                conversationRequest = llHTTPRequest(programoURL
+                    + llEscapeURL(message)
+                    + "&bot_id=1&format=json"
+                    , [HTTP_METHOD, "GET", HTTP_MIMETYPE, "plain/text;charset=utf-8"], "");
+             else // use the convo_id we have
+                conversationRequest = llHTTPRequest(programoURL
+                    + llEscapeURL(message)
+                    + "&convo_id=" + conversationID
+                    + "&bot_id=1&format=json"
+                    , [HTTP_METHOD, "GET", HTTP_MIMETYPE, "plain/text;charset=utf-8"], "");   
+                    
+             aviBotHttp = [] + llListReplaceList(aviBotHttp, [conversationRequest], idx, idx);
+             
+        }
+        //osNpcSay(uNPC, "I do not know how to "+cmd1+". Say '"+npcName+" help' for more");
     }
-
     return 1;
 }
 
@@ -1006,26 +1285,56 @@ integer MoveToNewTarget(integer idx)
         
     tgt += <rx, ry, eh>;
 
-    osSetSpeed(uuid, 0.8);
-    osNpcSetRot(uuid, llRotBetween(<PI,PI,0>,llVecNorm(tgt - osNpcGetPos(uuid))));
+    osSetSpeed(uuid, 0.5);
     osNpcMoveToTarget(uuid, tgt, OS_NPC_NO_FLY);
     
-    aviTime = llListReplaceList(aviTime, [ llGetUnixTime() + GetWalkTime( llVecDist(wp, tgt) )], idx, idx);
-    aviNodes = llListReplaceList(aviNodes, [nt], idx, idx);
-    aviPrevNodes = llListReplaceList(aviPrevNodes, [curNode], idx, idx);
+    aviTime =[]+ llListReplaceList(aviTime, [ llGetUnixTime() + GetWalkTime( llVecDist(wp, tgt) )+4], idx, idx);
+    aviNodes = []+llListReplaceList(aviNodes, [nt], idx, idx);
+    aviPrevNodes = []+llListReplaceList(aviPrevNodes, [curNode], idx, idx);
     return 0;
 }
 
 
-ExecScriptLine(string aviName, string scriptline)
+integer ExecScriptLine(string aviName, string scriptline)
 {
-    // The token list expects the name of the avi twice. we use BATCH as the sending-uid identifier
-    string command = "! BATCH " + aviName+" "+ aviName + " " + scriptline;
-
+    // The token list expects the name of the avi twice. we use 0000 as the sending-uid identifier
+    string command = "! 0000 " + aviName+" "+ aviName + " " + scriptline;
     list tokens = llParseString2List(command, [" "], [] );
-    //llOwnerSay(" Running: "+command + " " );
-    // Process the command as if we received it from from chat
-    ProcessNPCCommand(tokens);
+    return ProcessNPCCommand(tokens);
+}
+
+
+
+string TimeAgo(integer time)
+{
+    // time difference in seconds
+    integer now = llGetUnixTime();
+    integer timeDifference = now - time;
+    // small bug fix for when timeDifference is 0
+    if (timeDifference == 0)
+        return "just now";
+ 
+    list periods = ["second",        "minute",        "hour",        "day",        "week",        "month",        "year",        "decade"];
+ 
+    //the number equivalent to periods
+    list lenghts = [1,        60,        3600,        86400,        604800,        2630880,        31570560,        315705600];
+ 
+    integer v = llGetListLength(lenghts) - 1;
+    integer no;
+ 
+    while((0 <= v) && (no = timeDifference/llList2Integer(lenghts, v) <= 1))    --v; 
+    string output = llList2String(periods, v);
+ 
+    //this will get the correct time in periods, then divide the timeDifference
+    integer ntime = timeDifference / llList2Integer(lenghts, llListFindList(periods, [output]));
+ 
+    //if integer 'no' is not equal to 1 then it should have an s at the end
+    if(no != 1)
+        output += "s";
+ 
+    //This produces the finished output
+    output = (string)ntime + " "+ output + " ago";
+    return output;
 }
 
 
@@ -1034,24 +1343,27 @@ default
 
     state_entry()
     {
+        llSetText("NPCs", <1,1,1>,1.0);
         llListenRemove(gListener);
         gListener = llListen(channel, "", "", "");
         llOwnerSay("Listening on channel "+channel);
+        ReloadConfig();
         LoadMapData();
         //llOwnerSay(llList2CSV(wNodes));
         //llOwnerSay(llList2CSV(wLinks));
-        
-        RescanAvis();  
-        llSetTimerEvent(5);
+        timerRuns=0;
+        RescanAvis();
         greetedAvis = [];
-        animSets = ["","","","","","","","","","", "",""];  // Empty slots
+        scriptVars = [];
+        llSetTimerEvent(TIMER_INTERVAL);
     }
     
     touch_start(integer num)
     {
         avi = llDetectedKey(0);
-        if (llGetOwner() != avi)
+        if (llListFindList(allowedUsers, (string)avi)<0)
             return;
+
         llDialog(avi, "Welcome", menuItems, channel);
     }
     
@@ -1063,6 +1375,8 @@ default
         integer total = llGetListLength(aviUids);
         integer g;
         integer advanceScript;
+        list startedScripts = [];
+        if (curVisitors>0)
         for (g=0; g < total ; g++)
         {
                 advanceScript =0;
@@ -1086,7 +1400,7 @@ default
                     if (llGetListLength(userData) ==0)
                     {
                         // User left or died
-                        aviStatus= llListReplaceList(aviStatus, [ "" ], g, g);
+                        aviStatus=  []+llListReplaceList(aviStatus, [ "" ], g, g);
                         return;
                         
                     }
@@ -1121,21 +1435,30 @@ default
                             integer i;
                             integer shouldMove =1;
                             // avoid looping back to the same script while we are about to leave
-                            if (llGetUnixTime() >  llList2Integer(aviAlarm, g)+120)
+                            if (llGetUnixTime() >  llList2Integer(aviAlarm, g) + 30)
                             {
-                                for (i=0; i < llGetListLength(wAutorunScripts); i+=2)
+                                if (llListFindList(startedScripts, curNode)>=0)
                                 {
-                                    if (llList2Integer(wAutorunScripts,i) == curNode)
+                                    // dont start the same script simultaneously
+                                }
+                                else
+                                {
+                                    integer widx = llListFindList(wAutorunScripts, curNode);
+                                    if (widx >=0)
                                     {
-                                        ExecScriptLine(llList2String(aviNames, g), "run-notecard "+llList2String(wAutorunScripts,i+1));
-                                        shouldMove =0;
-                                    }
+                                        if (deflectToNode<0 || deflectToNode == curNode || (llFrand(1.0) <  0.0)  )
+                                        {
+                                            startedScripts+= curNode;
+                                            ExecScriptLine(llList2String(aviNames, g), "run-notecard "+llList2String(wAutorunScripts,widx+1));
+                                            shouldMove =0;
+                                        }                                 
+                                    }                                
                                 }
                             }
                             
                             if (shouldMove>0)
                             {
-                               if (llFrand(1.0) < 0.5)
+                               if (llFrand(1.0) < 0.03)
                                    ExecScriptLine(llList2String(aviNames, g), "get fart");
                                MoveToNewTarget(g);
                             }
@@ -1151,12 +1474,9 @@ default
                         vector nd = llList2Vector(wNodes, 2*idx);
                         integer flag = OS_NPC_FLY;
                         osSetSpeed(npc, 0.5);
-                        //if (llFrand(1.0)<.9)
-                            flag = OS_NPC_FLY|OS_NPC_LAND_AT_TARGET;
+                        //if (llFrand(1.0)<.4)
+                        //    flag = OS_NPC_FLY|OS_NPC_LAND_AT_TARGET;
                         integer theight = 10;
-
-                        if (timerRuns%8==0)
-                            theight = 25;
                         osNpcMoveToTarget(npc, nd +  <llFrand(1),llFrand(1),theight>, flag);
                     }
                 }
@@ -1176,7 +1496,7 @@ default
                         {
                             osNpcSay(npc, "I have arrived");
                             
-                            aviStatus = llListReplaceList(aviStatus, [ "" ], g, g);
+                            aviStatus =  []+llListReplaceList(aviStatus, [ "" ], g, g);
                             
                             // continue the script (if any), since we reached our destination
                             SetScriptAlarm(g, 0); 
@@ -1188,9 +1508,9 @@ default
                             string ndleft = ":"+llDumpList2String( llList2List(pnodes, 1, llGetListLength(pnodes)), ":");
 
 
-                            aviPath = llListReplaceList(aviPath, [ ndleft ], g, g);
+                            aviPath =  []+llListReplaceList(aviPath, [ ndleft ], g, g);
                             vector v = llList2Vector(wNodes, 2*nextTgt);              
-                            aviTime = llListReplaceList(aviTime, [ llGetUnixTime() + GetWalkTime(llVecDist(p, v)) ], g, g);
+                            aviTime =  []+llListReplaceList(aviTime, [ llGetUnixTime() + GetWalkTime(llVecDist(p, v)) ], g, g);
                             
 
               
@@ -1206,7 +1526,7 @@ default
                     integer ts = llGetUnixTime();
                     if (ts > llList2Integer(aviTime, g)+60)
                     {
-                        aviTime = llListReplaceList(aviTime, [ts], g, g);
+                        aviTime =  []+llListReplaceList(aviTime, [ts], g, g);
                         
                         string old_anim = llList2String(aviDanceAnim, g);
                         integer newidx = (integer)llFrand(llGetListLength(dance1));
@@ -1216,7 +1536,7 @@ default
                         
                         osNpcStopAnimation(npc, old_anim);
                         osNpcPlayAnimation(npc, new_anim);
-                        aviDanceAnim = llListReplaceList(aviDanceAnim, [ new_anim ], g, g);
+                        aviDanceAnim =  []+llListReplaceList(aviDanceAnim, [ new_anim ], g, g);
                     }
                 }
                 else
@@ -1226,35 +1546,78 @@ default
                 
                 
                 // Execute the next script line if a script is active
-                
-                integer scriptIndex = llList2Integer(aviScriptIndex, g);
-                if (scriptIndex > 0) // This avi is executing a script
+                integer stopNow=0;
+                integer k;
+                for (k=0; k < 5 && stopNow==0; k++) // execute up to 5 lines at once if possible
                 {
-                    integer tsAlarm = llList2Integer(aviAlarm, g);
-                    integer diff = llGetUnixTime() - tsAlarm;
-
-                    if (tsAlarm >0 && llGetUnixTime() >= tsAlarm ) // The script should continue now
-                    {        
-                        string scriptData = llList2String(aviScriptText, g);
-                        string scriptline = GetScriptLine(scriptData, scriptIndex);
-                        if (scriptline == "") // End of script
-                        {
-                                // This will prevent any further execution
-                                aviScriptIndex = llListReplaceList(aviScriptIndex, [-1], g, g);
-                        }
-                        else
-                        {
-                            // Set the timer for the next command 1 second later by default. Some commands will override this (e.g. go to, wait).
-                            SetScriptAlarm(g, 1);
-                            ExecScriptLine( llList2String(aviNames, g), scriptline);
-                            // Advance script pointer 
-                            scriptIndex = llList2Integer(aviScriptIndex, g); 
-                            aviScriptIndex = llListReplaceList(aviScriptIndex, [scriptIndex+1], g,g);
+                    integer scriptIndex = llList2Integer(aviScriptIndex, g);
+                    if (scriptIndex > 0) // This avi is executing a script
+                    {
+                        integer tsAlarm = llList2Integer(aviAlarm, g);
+                        integer diff = llGetUnixTime() - tsAlarm;
+    
+                        if (tsAlarm >0 && llGetUnixTime() >= tsAlarm ) // The script should continue now
+                        {        
+                            string scriptData = llList2String(aviScriptText, g);
+                            string scriptline = GetScriptLine(scriptData, scriptIndex);
+                            if (scriptline == "") // End of script
+                            {
+                                    // This will prevent any further execution
+                                    aviScriptIndex =  []+llListReplaceList(aviScriptIndex, [-1], g, g);
+                            }
+                            else
+                            {
+                                // Set the timer for the next command 1 second later by default. Some commands will override this (e.g. go to, wait).
+                                SetScriptAlarm(g, 1);
+                                stopNow = ExecScriptLine( llList2String(aviNames, g), scriptline);
+                                // Advance script pointer 
+                                scriptIndex = llList2Integer(aviScriptIndex, g); 
+                                aviScriptIndex =  []+llListReplaceList(aviScriptIndex, [scriptIndex+1], g,g);
+                            }
                         }
                     }
                 }
+                
+                llParticleSystem(
+                [
+                    PSYS_SRC_PATTERN,PSYS_SRC_PATTERN_EXPLODE,
+                    PSYS_SRC_BURST_RADIUS,0,
+                    PSYS_SRC_ANGLE_BEGIN,0,
+                    PSYS_SRC_ANGLE_END,0,
+                    PSYS_SRC_TARGET_KEY,llGetKey(),
+                    PSYS_PART_START_COLOR,<1.000000,0.000000,0.000000>,
+                    PSYS_PART_END_COLOR,<1.000000,0.000000,0.000000>,
+                    PSYS_PART_START_ALPHA,1,
+                    PSYS_PART_END_ALPHA,0,
+                    PSYS_PART_START_GLOW,0,
+                    PSYS_PART_END_GLOW,0,
+                    PSYS_PART_BLEND_FUNC_SOURCE,PSYS_PART_BF_SOURCE_ALPHA,
+                    PSYS_PART_BLEND_FUNC_DEST,PSYS_PART_BF_ONE_MINUS_SOURCE_ALPHA,
+                    PSYS_PART_START_SCALE,<0.500000,0.500000,0.000000>,
+                    PSYS_PART_END_SCALE,<4.000000,4.000000,0.000000>,
+                    PSYS_SRC_TEXTURE,"",
+                    PSYS_SRC_MAX_AGE,0.5,
+                    PSYS_PART_MAX_AGE,2,
+                    PSYS_SRC_BURST_RATE,1,
+                    PSYS_SRC_BURST_PART_COUNT,1,
+                    PSYS_SRC_ACCEL,<0.000000,0.000000,0.000000>,
+                    PSYS_SRC_OMEGA,<0.000000,0.000000,0.000000>,
+                    PSYS_SRC_BURST_SPEED_MIN,0,
+                    PSYS_SRC_BURST_SPEED_MAX,0,
+                    PSYS_PART_FLAGS,
+                        0 |
+                        PSYS_PART_EMISSIVE_MASK |
+                        PSYS_PART_INTERP_COLOR_MASK |
+                        PSYS_PART_INTERP_SCALE_MASK
+                ]);
+                
         }
+        
         timerRuns++;
+        if (timerRuns%20==0)
+        {
+            curVisitors = countVisitors();
+        }
     }
     
 
@@ -1263,25 +1626,21 @@ default
 
         list tok = llParseString2List(str, [" "] , [""]);
         string mes = llList2String(tok, 0);
-
-        if  (mes == "SaveAvi")
+        
+        if  (mes == "SaveNPC")
         {
-            llDialog(avi, "Select NPC to save your appearance", llList2List(availableNames, 0,11), channel);       
+            llDialog(avi, "Select NPC to save your appearance", llList2List(availableNames, 0,10)+ "more", channel);       
 
             userInputState = "WAIT_APPNAME";
         }
-        else if (mes == "Rescan")
+        else if (mes == "LoadNPC")
         {
-            RescanAvis();
-        }
-        else if (mes == "LoadAvi")
-        {
-            llDialog(avi, "Select an NPC to load", llList2List(availableNames, 0,11), channel);     
+            llDialog(avi, "Select an NPC to load", llList2List(availableNames, 0,10)+"more", channel);     
             userInputState = "WAIT_AVINAME";
         }
-        else if (mes == "RemoveAvi")
+        else if (mes == "RemoveNPC")
         {
-            llDialog(avi, "Select an NPC to delete", llList2List(availableNames, 0,11), channel);     
+            llDialog(avi, "Select an NPC to delete",  llList2List(availableNames, 0,10)+ "more", channel); 
             userInputState = "WAIT_REMOVEAVI";
         }
         else if (mes == "RemoveAll")
@@ -1294,52 +1653,80 @@ default
             {
                 if (osIsNpc(llList2Key(avis, i)))
                 {
+                    osNpcStand(llList2Key(avis, i));
                     osNpcRemove(llList2Key(avis, i));
                 }
             }
             aviUids = [];
             aviNames = [];
         }
-        else if (mes == "initcommands")
+        else if (mes == "LoadAll")
         {
-            // Specify a list of commands here. Send /68 initcommands to execute them
+            llSetTimerEvent(0);
             integer i;
-            list commands = [
-            "icaros fly with dedalos",
-            "dedalos flyaround",
-            "ares leave",
-            "pan leave",
-            "midas leave",
-            "kriton leave",
-            "leon leave",
-            "philon leave",
-            "iasos leave",
-            "nicanor leave",
-            "ariston leave",
-            "nais batch goto 2; dance",
-            "lydia batch go to tavern; dance" 
-            ];
-            
-            for (i=0; i < llGetListLength(commands); i++)
+            avis = osGetAvatarList();
+            llOwnerSay(llList2CSV(avis));
+            howmany = llGetListLength(avis);
+            for (i =0; i < howmany; i+=3)
             {
-                list toks = llParseString2List(llList2String(commands,i), [" "], []);    
-                list tok2 = ["!", "0000", llList2String(toks, 0)]; /// Need name of npc twice
-                tok2 += toks;
-                llOwnerSay("Cmd="+llList2CSV(tok2));
-                ProcessNPCCommand(tok2);
-                llSleep(1);
-            }           
-
+                if (osIsNpc(llList2Key(avis, i)))
+                {
+                    osNpcStand(llList2Key(avis, i));
+                }
+            }
+            
+            for (i=0; i < llGetListLength(availableNames);i++)
+            {
+                doLoadNPC(llList2String(availableNames, i));
+            }
+            llSetTimerEvent(TIMER_INTERVAL); 
         }
-        else if (mes == "TimerOff")
-        {
-            llSetTimerEvent(0.0);
+        else if (mes == "InitCmds")
+        {    
+            string notecard= "__initcommands";
+            integer i;
+            llSetTimerEvent(0);
+            for(i=0; i<=osGetNumberOfNotecardLines(notecard); i++) {
+                
+                string line = osGetNotecardLine(notecard, i);
+                if (llStringLength(line)>0 && line != "")
+                {
+                    list toks = llParseString2List(line, [" "], []);
+                    if (llGetListLength(toks)>1)
+                    {
+                        list tok2 = ["!", "0000", llList2String(toks, 0)]; /// Need name of npc twice
+                        tok2 += toks;
+                        llOwnerSay("InitCmd="+llList2CSV(tok2));
+                        ProcessNPCCommand(tok2);
+                    }
+                }
+            }
+            llSetTimerEvent(TIMER_INTERVAL);
         }
-        else if (mes == "ReloadMap")
+        else if (mes == "TimerOnOff")
         {
+            timerRunning = !timerRunning;
+            llSetTimerEvent(TIMER_INTERVAL*timerRunning);
+            llOwnerSay("Timer="+(string)timerRunning);
+        }
+        else if (mes == "DumpData")
+        {
+            llOwnerSay("Names="+llList2CSV(aviNames));
+            llOwnerSay("Status="+llList2CSV(aviStatus));
+            llOwnerSay("Nodes="+llList2CSV(aviNodes));
+            llOwnerSay("PrevNodes="+llList2CSV(aviPrevNodes));            
+            llOwnerSay("ScriptIndex="+llList2CSV(aviScriptIndex));
+            llOwnerSay("Alarm="+llList2CSV(aviAlarm));
+            llOwnerSay("Curvisitors="+(string)(curVisitors)+ " Timer=" +timerRunning+" timerRuns="+(string)timerRuns);        
+            llOwnerSay("Vars="+llList2CSV(scriptVars));
+           // llSetTimerEvent(0.0);
+        }
+        else if (mes == "ReConfig")
+        {
+            ReloadConfig();
             LoadMapData();
         }
-        else if (mes == "UploadWP")
+        else if (mes == "UploadData")
         {
             // Upload the map waypoints to the web server
             list lst; 
@@ -1356,15 +1743,12 @@ default
             llHTTPRequest(BASEURL+"act=updateNodes", [HTTP_METHOD, "POST"], ""+wpdata);
             llOwnerSay("Length="+llStringLength(wpdata));
             
-        }
-        else if (mes == "UploadLnk")
-        {
             // Upload the map links to the web server
-            list lst; 
-            integer i;
-            integer j;
-            string wpdata;
-            string wpname;
+            //list lst; 
+            //integer i;
+            //integer j;
+            wpdata="";
+            wpname="";
             wpdata = llList2CSV(wLinks);
             
             llHTTPRequest(BASEURL+"act=updateLinks", [HTTP_METHOD, "POST"], ""+wpdata);
@@ -1372,91 +1756,15 @@ default
 
             
         }
-        else if (mes == "balls")
+        else if (mes == "deflectTo")
         {
-            string cmd = llList2String(tok, 1);
-            integer i;
-            if (cmd == "rez")
-            {
-
-                vector pos = llGetPos() + <3,0,0>;
-                for (i=0; i <llGetListLength(aviNames); i++)
-                {
-                    
-                    llRegionSay(78, (string)i+" die");
-                    llRezObject("positioner", pos + <i*0.3,0,1>, ZERO_VECTOR, ZERO_ROTATION, i);
-                    //llSleep(1);
-                }
-            }
-            else if (cmd == "kill")
-            {
-                for (i=0; i <=llGetListLength(aviNames); i++)
-                {   
-                    llRegionSay(78, (string)i+" die");
-                    //llSleep(1);
-                }
-            }
-            else if (cmd == "report")
-            {
-               positionsList = [];
-                for (i=0; i <=llGetListLength(aviNames); i++)
-                {   
-                    llRegionSay(78, (string)i+" report");
-                    //llSleep(1);
-                }
-            }
-            else if (cmd == "makeset")
-            {
-                //llOwnerSay("something");
-                //llOwnerSay(llList2CSV(positionsList));
-                string txt = "SET";
-                vector ref = ZERO_VECTOR;
-                for  (i=2; i < llGetListLength(tok);i++)
-                {
-                    integer npcId = GetNPCIndex(llList2String(tok, i));
-                    if (npcId >=0)
-                    {
-                        integer j;
-                        for (j=0; j < llGetListLength(positionsList); j+=3)
-                        {
-                            if (llList2Integer(positionsList, j) == npcId)
-                            {
-                                txt += ( " "+llList2String(aviCurrentAnim, npcId)+ " "+(string)llList2Vector(positionsList,j+1)+ " " +(string)llList2Rot(positionsList, j+2));
-                            }
-                        }
-                    }
-                }
-                llSay(0, txt);
-            }
-        }
-        else if (mes == "REP") // positioner reporting
-        {
-            positionsList += [
-                (integer)llList2String(tok,1),
-                (vector)llList2String(tok,2),
-                (rotation)llList2String(tok,3)];
-                
-        }
-        else if (mes == "calc-pos")
-        {
-            integer i;
-            if (llGetListLength(positionsList)<2)  return;
-            vector ref = llList2Vector(positionsList, 1);
-            ref.x =0;
-            ref.y =0;
-            for (i=0; i < llGetListLength(positionsList); i+=3)
-            {
-                 vector v = llList2Vector(positionsList,i+1);
-                 v -= ref;
-                 rotation r = llList2Rot(positionsList,i+2);
-                 llSay(0, ""+(string)llList2Integer(positionsList, i)+" "+(string)v+ " "+(string)r);
-            }
+            deflectToNode = GetNodeIndexByName(llToLower(llList2String(tok,1)));
+            llOwnerSay("Deflecting to #"+(string)deflectToNode);
         }
         else if (mes =="fetch")
         {
             // fetch an NPC here
             integer idx = GetNPCIndex(llList2String(tok, 1));
-
             llOwnerSay("Fetching "+(string)idx+"");
             if  (idx >=0)
             {
@@ -1466,6 +1774,10 @@ default
                 osTeleportAgent(n, llList2Vector(userData,1)+<1,0,0> , <1,1,0>);
             }
                         
+        }
+        else if (mes == "SETVAR")
+        {
+          setVar(llList2String(tok,1), (integer)llList2String(tok,2));
         }
         else if (mes =="FBALL")
         {
@@ -1485,18 +1797,19 @@ default
                         osNpcStand(unpc);
                         osNpcStopMoveToTarget(unpc);
                         osNpcSit(unpc, ball, OS_NPC_SIT_NOW);
-                        aviStatus = llListReplaceList(aviStatus, ["sitting"], idx, idx);
+                        aviStatus =  []+llListReplaceList(aviStatus, ["sitting"], idx, idx);
                         jump ballFound;
                 }
             }          
-            llOwnerSay("All balls transparent");  
+            llOwnerSay(npcname + ": All balls transparent");  
             @ballFound;
             
         }
         else if (mes == "!") // Something that has been sent from the NPCs
         {
             ProcessNPCCommand(tok);   
-        } 
+        }
+
         else if (userInputState != "" && mes != "")//  Process dialog commands
         {
             //llOwnerSay("USER MSG WAIT");
@@ -1508,21 +1821,13 @@ default
             {
                 if (userInputState == "WAIT_APPNAME")
                 {
-                    osAgentSaveAppearance(avi, "APP_"+mes);
-                    llSay(0,  "Saved Appearance " + avi + " -> APP_"+mes);
+                    osAgentSaveAppearance(avi, "APP_"+llToLower(mes));
+                    llSay(0,  "Saved Appearance " + avi + " -> APP_"+llToLower(mes));
                 }
                 else if (userInputState == "WAIT_AVINAME")
                 {
-                    if (GetNPCIndex(mes)>=0)
-                    {
-                        llSay(0, mes + " is already in region, not loading");
-                        return;
-                    }
-                    npc = osNpcCreate(mes, "NPC", llGetPos()+<0,0,1>, "APP_"+mes,  OS_NPC_NOT_OWNED | OS_NPC_SENSE_AS_AGENT);
-                    aviUids += npc;
-                    aviNames += mes;
-                    llSay(0, "Created "+mes+" " + (string)npc);
-                    osNpcMoveToTarget(npc, osNpcGetPos(npc) + <1,0,0>, OS_NPC_NO_FLY );
+                    doLoadNPC(mes);
+
                 }
                 else if (userInputState == "WAIT_SELECTAVI")
                 {
@@ -1537,24 +1842,9 @@ default
                 }
                 else if (userInputState == "WAIT_REMOVEAVI")
                 {
-                    //llOwnerSay(llList2CSV(aviNames));
-                    integer idx = llListFindList(aviNames, [""+llToLower(mes)]);
-                    if (idx >=0)
-                    {
-                        aviIndex = idx;
-                        npc = llList2Key(aviUids, idx);
-                        name = llList2String(aviNames, idx);
-                        osNpcRemove(llList2Key(aviUids, idx));
-                        
-                        llSay(0,"Removing " + name + " " + (string)npc);
-                        aviUids = llDeleteSubList(aviUids, idx, idx);
-                        aviNames = llDeleteSubList(aviNames, idx, idx);
-                    }
-                    else 
-                        llSay(0, "Not found:" + mes);
+                    doRemoveNpc(mes);
                 }
 
- 
                 userInputState="";
             }
         }
@@ -1586,14 +1876,42 @@ default
                 else
                 {
                     osNpcSay(uNPC, "I am now going to "+origname+". If you want to go there, follow me.");
-                    aviPath = llListReplaceList(aviPath, [bestpath], idx, idx);
-                    aviTime = llListReplaceList(aviTime, [0], idx, idx);
-                    aviStatus = llListReplaceList(aviStatus, ["pathf"], idx, idx);
-                }   
+                    aviPath = []+ llListReplaceList(aviPath, [bestpath], idx, idx);
+                    aviTime =  []+llListReplaceList(aviTime, [0], idx, idx);
+                    aviStatus =  []+llListReplaceList(aviStatus, ["pathf"], idx, idx);
+                } 
+                return; 
             }
         }
         
+        // Must be a bot response
+        idx = llListFindList(aviBotHttp, [request_id]);
+        if (idx >=0)
+        {
+            key uNPC  = llList2Key(aviUids,idx);
+            string conversationID = llGetSubString(body, 13, 34);
+            string botReply  = llGetSubString(body,  llSubStringIndex(body, "\"botsay\":\"") + 10, -3);
+            osNpcSay(uNPC, botReply);
+            aviBotConvId = []+ llListReplaceList(aviBotConvId, [conversationID], idx, idx);
+        }
 
     }
+    
+    
+    link_message(integer lnk, integer num, string command, key npc) // This script is in the object too.
+    {
+        list tokens = llParseString2List(command, [" "], [] );
+        llOwnerSay("Root: "+command);
+        ProcessNPCCommand(tokens);
+    }
+
+    changed(integer change)
+    {
+        if (change & CHANGED_REGION_START)
+        {
+            llResetScript();
+        }
+    }    
+
 }
 
