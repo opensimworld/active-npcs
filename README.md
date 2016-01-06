@@ -1,115 +1,193 @@
-active-npcs
-============
+==Installation==
 
-A framework for managing interactive NPC avatars in opensimulator
+The controller requires OSSL functions to work. Apart from the osNpc*() functions you should also enable osListeRegex(), osGetNotecard(), osMessageAttachments().   The controller uses channel 68 for all its functions. 
 
-This framework allows the management of a set of NPC avatars from a single controller object. 
+In order to set the names of your NPCs , edit the __npc_names notecard, and add the *first* names of your NPCs , one at a line. The last name of your NPCs will always be (NPC). 
 
-Some features of this package:
+To create an NPC, wear the "Listener" object in your RIGHT PEC. The listener is an object that all your NPCs have. It listens to the local chat for commands and sends them to the NPC controller.  After wearing the listener, move within 20 meters  near the controller,  click on the controller, select SaveNPC and then the name of the NPC you wish to create.  You should see a message "Appearance saved to APP_xxxx" . This means your appearance has been saved in a notecard inside the controller. Your NPCs can have multiple appearances (more on this later).  
 
-- Allows you to talk to your NPCs through the normal chat and ask them to do tasks
-- Has its own scripting language that allows you to run series of commands through a notecard
-- Uses conventions to avoid scripting for animations, for example, to sit on a "float" poseball, all you need to do is say  "do float"  to your NPC
-- Your NPCs can follow you or other avatars or fly with them
-- Automatically calculates walk times, so you dont have to 
-- Allows the creation of a region map with waypoints and links 
-- Your NPCs know how to get from a to b in the map (requires external web server for pathfinding). 
-- The provided clothes listener script allows you to hide/show their clothes efficiently, thus allows you to change their appearance without reloading the appearance notecard
-- The scripting language allows complex flow control through "if", "jump" and the counter variable "var1"
-- Only a single timer is used for all the NPCS, thus drastically reducing load times even for large numbers of NPCs.
+You can now load your NPC. Click the controller, click LoadNPC, then click the name of the NPC to load.  If all has gone well, your NPC should now respond to commands. Try "<name> come" or "<name> follow me"  to test it.  There are many commands you can use to have your NPCs do things. 
 
 
-Example of commands  that the NPCs  (named "Foo") can perform:
-  
-    Foo follow me
-    Foo follow <other avatar's or other NPCs first name>
-    Foo fly with me
-    Foo do <poseball-name>
-    Foo go to Theater (find the path to the theater with the shortest number of hops and goes there)
-    Foo sit  (sits on a nearby MLP poseball)
-    Foo leave (starts wandering aimlessly around your region's waypoints)
 
-Example contents of a notecard with a script:
-  
-    if-not name-is Foo  (We only want the NPC named Foo to run this)
-    jump endOfScript
-    endif
-    moveto 5  (walk to waypoint #5)
-    do float  (Sit on the poseball named float)
-    wait 20  (wait approximately 20 seconds while still sitting)
-    stand up
-    movetov <230,10,22> ( walk to a specific point (vector) in your region)
-    Go to theater (follow the shortest path that leads to the waypoint named "Theater")
-    say blah (Say "blah" on the public channel)
-    dance (start playing dance animations)
-    wait 50 (keep dancing for 50 seconds)
-    stop (stop playing animations and stand up - useful for resetting your NPC)
-    drop shirt (hide the shirt)
-    wear jacket (show the jacket)
-    var1 zero (Set counter variable var1 to zero)
-    @looplabel (defines a label to be used below)
-    go to house
-    go to theater
-    var1 ++ (increment the var1 counter)
-    if var1-lt 3  (Execute the loop 3 times)
-    jump looplabel
-    end-if
-    go to Bar
-    @endOfScipt (another label)
-    leave (The NPC will start wandering between waypoints again)
+==Creating waypoints== 
 
-Such notecard scripts can be executed automatically whenever your NPCs reach a waypoint.
+You can use the controller to create paths within your region, and the NPCs can wander along those paths. In addition, you can have them do interesting actions whenever they reach specific points by creating "scenario" notecards. 
 
-ActiveNPCs are designed to be interactive, i.e. they can take commands from the public chat (if they are nearby) and perform actions. These commands can be entered in notecards which in combination with flow control functions allows complex behaviors.
+To create a map, wear the WaypointEditor HUD. The HUD works by rezzing a number of "traffic cone" pegs around your region, which represent the waypoints that your NPCs follow. You can use the HUD to edit those points and create links between them. 
 
-The system is based on a number of conventions commonly used in open worlds. It also uses heavily opensim-specific features such as osListenRegex and osMessageAttachment which allow it to run fast with very little lag and minimal resource consumption. 
+You begin by clicking RezPegs on the HUD. If you have an existing map, this will rez pegs in each waypoint, otherwise you will not see any pegs. 
 
-Overview of setup:
-- Drop the controller script in a controller object. 
-- Create a notecard named "npc_names". Enter the first names of your NPCs, one name per line. Important: Use only single-word (no spaces) names. The last name of your NPC will always be "NPC".
-- Create a notecard named "waypoints" which defines the waypoints of your region (optional but you 'll miss half the fun without it). Drop the notecard in the controller object.
--- Each line in the notecard is of the form "x,y,z,name-of-waypoint,optional-notecard-name". The optional-notecard-name is the (optional) name of a notecard that will automatically be executed whenever an NPC reaches this waypoint
-- Create a notecard named "links" that defines which waypoints are connected to each other
--- Each line in this notecard is of the form p1,p2, where p1 and p2 are the line numbers of the waypoints in the "waypoints" notecard. Drop this notecard in the controller object.
+To add a waypoint, move your avatar to the desired position, and select "AddPeg" from the HUD. To create a second waypoint, move to another position, and  AddPeg again. 
 
-For example for a region with 4 waypoints named "house", "gym", "bar" and "theater" the "waypoints" notecard would be 
+To link two waypoints, click on the first one, then click on the second one and select "LinkPegs" from the  popup. 
 
-    30,20,22,House
-    40,30,22,Gym
-    40,60,22,Bar,dance.scr
-    80,90,22,Theater
-
-The "links" notecard would contain something like this:
-
-    0,1
-    0,2
-    2,3
-
-which means that the house is connected with the gym and bar, and the bar is connected to the theater (all connections are reciprocal)
-
-After editing the list of waypoints or links, click on the controller object and select "ReConfig" to reload the changed configuration.
-
-- To create the appearance notecards for your NPCs, first create a transparent listener object, add the 'listener.lsl' script to it and wear it on your LEFT PEC. This attachment listens to the public channel for the NPC's name. For example if your NPC is  named "Foo", the NPC will capture all messages that begin with "Foo " such as "Foo go to theater" will ask the controller to handle them. 
+To unlink two waypoints, click on the first one, then click on the second one and select "UninkPegs" from the  popup. 
 
 
-- Remember that if you edit any of your attachments, you need to detach and reattach them before saving your appearance. This is required by opensim.
+To set a name for a waypoint, click the peg , select "SetName", and ender the name (E.g. "Bar")
 
-- When your appearance is ready, click on the controller object, select SaveNPC to save your appearance to each NPC.
+You can use the standard edit tools to move around the waypoints. Be careful, after you move a peg, you MUST select "ScanPegs" from the HUD or your changes will be lost.
 
-- You can now load your NPC by clicking on the controller-> LoadNPC-> select your NPC name. Issue some commands to your npc to make sure it works, e.g. "Foo come here" "Foo say something" "Foo follow me".
+To save the changes in the controller notecards, select "SaveCards" from the HUD.  To test if all went well, clear the pegs and rez them again. 
 
-- If you want the NPCs to sit on poseballs use the provided "poseball.lsl" script. The convention is that the poseball's name defines the command. E.g. if your poseball object is named "float", then you can say "Foo do float" to make the NPC sit on it. ("Foo stand up" gets the npc back up)
-
-- If you want your NPCs to be able to interpolate between the points , you have to use an external web server, since LSL is too slow for this (we provide a simplistic interpolation function in the code but it's not used and gets unusably slow for paths that have more than 10 hops). This way, your NPCs can follow commands such as "go to Theater" , which will take them to the theater using the least possible number of hops between waypoints. 
-
-- If you want to hide/show prim or mesh attachments, add the 'clotheslistener.lsl' script to your attachments. You will have to customize the "wear"/ "drop" commands on the listener script to tailor to your needs.
+After creating the map, it is possible to have the NPCs walk to specific waypoints. For example, if you have a waypoint named "Bar" , you can ask an NPC to go there (but only if it is up to 10 hops away), like this: "Bob go to Bar"
 
 
-We provide a set of 2 php scripts (index.php, sql.inc.php) and a database schema (schema.sql) that can be used with an external LAMP web server to perform the pathfinding. Upload the scripts to your web server, and edit the database settings. Use the "schema.sql" to create the database. Important: you need to insert a record in the 'city_keys' table for your region amd set the 'ckey' field to something secret. This key must also be the same used in the  BASEURL variable of your controller , which you must also change to point to the URL of your web server.
+== NPC supported commands == 
 
-You can easily add your own commands  by extending the "ProcessNPCCommand function in the controller script.
+The NPCs support a number of commands.  You can give these commands through the public chat.  The syntax is:  <npc-firstname> <command>
+For example, assuming our NPC is called Bob: 
 
-ActiveNPCs was developed for opensim version 0.8.0.1 . Do not expect it to run in older versions.
+Bob come
+Bob leave
+Bob follow me
+...
+etc.
+
+You can have the NPCs execute these commands whenever they reach a waypoint by creating a "scenario" notecard.   A scenario is  a list of commands that is executed by the all NPCs whenever they reach that waypoint. 
+ 
+The following control commands are supported in  notecards:  if, if-not, jump
+ 
+Example of a notecard:
+
+if name-is Bob Alice
+   say hi
+   say i am either Bob or Alice
+   jump @outofhere
+end-if
+if-not name-is Bob
+    say I am definitely not Bob
+end-if
+say i am alice and i 'm now leaving
+@outofhere
+leave
+
+This examples shows how to use if blocks, the jump command and how to create labels like @outofhere
+
+As you see, in notecard scripts, the name of the NPC is omitted. It is replaced with the name of the NPC automatically, for example when Bob runs this notecards "say hi" becomes "Bob say hi". 
+
+In order to add a scenario to a waypoint, create a notecard with the name format:  "_<waypoint-number>.scr" and drop it in the controller object.
+ 
+For example the _10.scr notecard will be executed at waypoint #10, _11.scr at waypoint #11 and so on. Waypoints start at #0. You can find the waypoint number on top of the pegs when editing waypoints.
 
 
-Have Fun!
+==List of NPC commands==
+
+These commands must be preceded by the name of the NPC. Here we assume our NPC is called "Bob"
+
+Bob come         = "Come here ". Bob will come move close to you
+
+Bob moveto 23      : walk towards  waypoint #23
+
+Bob movetov <23,24,25>  :  walk towards point with coordinates <23,24,25> 
+
+Bob flytov <23,24,25>  :  fly towards point <23,24,25> in region
+
+Bob movetovr <23,24,25>  <23,24,25>   : walk to a random point between the points   <23,24,25>  <23,24,25>  
+
+runtovr <23,24,25>  <23,24,25>  : same as above, but run
+
+** Note: never leave spaces in coordinate vectors, i.e. <23,24,25> NOT <23, 24, 25> **
+
+=== Sit commands=== 
+
+The NPC can sit on objects. The way it works is as follows:
+
+Bob use chair              : Bob will attempt to find an object named "chair" (Object Name) near him and try to sit on it if its transparency (alpha) is less than 100%. Since by convention poseballs turn transparent when users sit on them, this ensures that Bob will not sit on an already-occupied poseball. 
+
+Bob stand                    : Bob will stand up if he is sitting
+
+=== Variables. ===
+Variables can be used with IF commands for more complex scenarios
+
+setvar foo 13                : set variable foo to be 13  . Only string variables are supported. Variables can be used in if blocks
+
+setvar foo                     : (blank) set variable foo to the empty string. The empty string is the default value if a command does not exit
+
+===Flow control with IF commands===
+There is support for multiple levels of IF blocks. blocks end with "end-if". There is no "else" command, but you can usually achieve the same effect with "jump" commands
+
+if name-is bob alice             : if the npc's name is Bob or alice
+   use dance                            : Sit on the poseball object named "dance"
+end-if                                        : always end IF blocks with end-if.  You  can nest if blocks
+
+if-not name-is Bob              : Example of negative if
+
+if-prob 0.3                              : if with random probabilty 0.3 (the if block will be executed 30% of the time)
+
+if var-is party 1                   : Will execute the if variable foo is  13
+
+Jump command.  You can use the syntax @label to create labels in your notecards. The syntax is:
+
+jump myLabel   :  like "jump" in LSL or "goto" in other languages. the label should be on a line by itself prefixed with '@' like this:
+
+@myLabel
+
+== Useful script commands == 
+wait 200                : wait 200 seconds
+
+waitvar foo 13     : wait until the variable foo gets the value 13
+
+waitvar foo          : wait until the variable foo is empty.
+
+
+
+
+== Pathfinding commands == 
+
+The NPCs can find the paths between waypoints and walk from point A to point B. Because this is computationally intensive, only paths with less than 10 waypoints between are supported. The following pathfinding commands are supported:
+
+
+Bob go to Bar   : this uses pathfinding  to go to the waypoint with the name "Bar"
+
+Bob go to            :  without  an argument, bob will print the names of waypoints  where it can go
+
+Bob goto 13       : go to waypoint #13 
+
+
+== Other commands == 
+Bob say hi                            : Says "hi" on public channel 
+
+Bob saych 90 blablah                   : say "blablah" on channel 90
+
+
+Bob msgatt  attachment_command 12 13 14 15  
+Uses osMessageAttachements to send the message "attachment_command" to attachments at attach points 12 13 14 15. 
+This can be useful for scripting NPC attachments. Read the OSSL docs of osMessageAttachments() for more. 
+
+
+Bob lookat me               : attempts to look at you 
+Bob lookat <x,y,z>          : look towards point x,y,z
+Bob lookat Bar                : look towards the waypoint named "Bar"
+
+Bob anim dance              : play animation "dance" . the animation must be in the inventory of the controller object
+
+Bob light                             :  turn on/off a light the NPCs have on them
+
+Bob follow me            : self-explanatory
+Bob follow  Alice        : follow alice around. Only the first name of the other avatar is needed
+
+Bob fly with me         : self-explanatory 
+Bob fly with alice      : fly with another user
+
+Bob stop                  :  Stops his animation and his movement.  and stops following you
+
+Bob leave                    : start wandering  between waypoints
+
+Bob run-notecard my_script.scr           : execute the contents of the notecard my_script.scr (the notecard must be in the controller inventory
+
+Bob stop-script                                      :  stop executing the notecard script
+
+
+Bob dress  swimming                           :  You can have multiple appearance notecards per NPC. This will attempt to load the appearance notecard named APP_bob_swimming from the controller's inventory. 
+
+
+Bob batch say hi ; wait 10; say bye  : executes multiple commands , separated by ";"
+
+
+
+==Extensions==
+
+You can create extensions with your own commands.  Extensions are scripts that are placed in child objects linked to the controller. The default NPC controller object already contains an extension (the little green  box). The script in it shows how extensions parse the data sent from the controller (through link_message)  and how they can respond.
+
