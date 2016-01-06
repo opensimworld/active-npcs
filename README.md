@@ -1,3 +1,8 @@
+You can get the OSW NPC package from the OpenSimWorld region in OSGrid:
+hg.osgrid.org:80:OpenSimWorld
+
+
+
 ==Installation==
 
 The controller requires OSSL functions to work. Apart from the osNpc*() functions you should also enable osListeRegex(), osGetNotecard(), osMessageAttachments().   The controller uses channel 68 for all its functions. 
