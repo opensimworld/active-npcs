@@ -1,6 +1,10 @@
-You can get the OSW NPC package from the OpenSimWorld region in OSGrid:
+This is a full-featured controller for creating interactive NPCs, scripting them (through notecards) and creating waypoints of your region so that the NPCs can roam around. 
+
+You can get the OSW NPC package from the OpenSimWorld region in OSGrid, where you can also see them in action:
+
 hg.osgrid.org:80:OpenSimWorld
 
+(move down near the bunker to find the package)
 
 
 ==Installation==
