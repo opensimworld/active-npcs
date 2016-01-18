@@ -49,9 +49,13 @@ The NPCs support a number of commands.  You  give these commands through the pub
 For example, assuming our NPC is called Bob: 
 
 Bob come
+
 Bob leave
+
 Bob follow me
+
 ...
+
 etc.
 
 You can have the NPCs execute these commands whenever they reach a waypoint by creating a "scenario" notecard.   A scenario is  a list of commands that is executed by the all NPCs whenever they reach that waypoint. 
