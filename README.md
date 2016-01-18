@@ -1,3 +1,5 @@
+# OpenSimWorld NPC Controller
+
 This is a full-featured controller for creating interactive NPCs, scripting them (through notecards) and creating waypoints of your region so that the NPCs can roam around. The controller is lightweight (a single script manages all the NPCs) and the NPCs are interactive (i.e. you can give them commands through the local chat).
 
 You can get the latest OSWNPC package from the OpenSimWorld region in OSGrid, where you can also see them in action:
