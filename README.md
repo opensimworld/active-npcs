@@ -62,7 +62,7 @@ This example shows how to use if blocks, the jump command and how to create labe
 
 As you see, in notecards, the name of the NPC is omitted. It is replaced with the name of the NPC automatically, for example when Bob runs this notecards "say hi" becomes "Bob say hi". 
 
-In order to add a scenario to a waypoint, create a notecard with the name format:  "_<waypoint-number>.scr" and drop it in the controller object.
+In order to add a scenario to a waypoint, create a notecard with the name format:  "_[waypoint-number].scr" and drop it in the controller object.
  
 For example the _10.scr notecard will be executed at waypoint #10, _11.scr at waypoint #11 and so on. Waypoints start at #0. You can find the waypoint number on top of the pegs when editing waypoints (Read below).
 
@@ -82,9 +82,9 @@ These commands must be preceded by the name of the NPC. Here we assume our NPC i
   Bob movetovr <23,24,25>  <23,24,25>   : walk to a random point between the points   <23,24,25>  <23,24,25>  
   
   runtovr <23,24,25>  <23,24,25>  : same as above, but run
-```
-** Note: never leave spaces in coordinate vectors, i.e. <23,24,25> NOT <23, 24, 25> **
 
+  ** Note: never leave spaces in coordinate vectors, i.e. <23,24,25> NOT <23, 24, 25> **
+```
 ## Sit commands
 
 The NPC can sit on objects. The way it works is as follows:
