@@ -79,9 +79,9 @@ These commands must be preceded by the name of the NPC. Here we assume our NPC i
 
   Bob flytov <23,24,25>  :  fly towards point <23,24,25> in region
   
-  Bob movetovr <23,24,25>  <23,24,25>   : walk to a random point between the points   <23,24,25>  <23,24,25>  
+  Bob movetovr <23,24,25>  <33,34,25>   : walk to a random point between the points   <23,24,25>  <33,34,25>  
   
-  runtovr <23,24,25>  <23,24,25>  : same as above, but run
+  runtovr <23,24,25>  <33,34,25>  : same as above, but run
 
   ** Note: never leave spaces in coordinate vectors, i.e. <23,24,25> NOT <23, 24, 25> **
 ```
