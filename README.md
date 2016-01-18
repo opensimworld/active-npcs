@@ -2,7 +2,7 @@ This is a full-featured controller for creating interactive NPCs, scripting them
 
 You can get the OSW NPC package from the OpenSimWorld region in OSGrid, where you can also see them in action:
 
-hg.osgrid.org:80:OpenSimWorld
+  hg.osgrid.org:80:OpenSimWorld
 
 (move down near the bunker to find the package)
 
@@ -48,15 +48,11 @@ After creating the map, it is possible to have the NPCs walk to specific waypoin
 The NPCs support a number of commands.  You  give these commands through the public chat when the NPC is near you.  The syntax is:  [npc-firstname] [command]
 For example, assuming our NPC is called Bob: 
 
-Bob come
-
-Bob leave
-
-Bob follow me
-
-...
-
-etc.
+  Bob come
+  Bob leave
+  Bob follow me
+  ...
+  etc.
 
 You can have the NPCs execute these commands whenever they reach a waypoint by creating a "scenario" notecard.   A scenario is  a list of commands that is executed by the all NPCs whenever they reach that waypoint. 
  
@@ -64,17 +60,17 @@ The following control commands are supported in  notecards:  if, if-not, jump
  
 Example of a notecard:
 
-if name-is Bob Alice
+  if name-is Bob Alice
    say hi
    say i am either Bob or Alice
    jump @outofhere
-end-if
-if-not name-is Bob
+  end-if
+  if-not name-is Bob
     say I am definitely not Bob
-end-if
-say i am alice and i 'm now leaving
-@outofhere
-leave
+  end-if
+  say i am alice and i 'm now leaving
+  @outofhere
+  leave
 
 This examples shows how to use if blocks, the jump command and how to create labels like @outofhere
 
@@ -88,39 +84,37 @@ For example the _10.scr notecard will be executed at waypoint #10, _11.scr at wa
 # List of NPC commands
 
 These commands must be preceded by the name of the NPC. Here we assume our NPC is called "Bob"
+```
+  Bob come         = "Come here ". Bob will come move close to you
 
-Bob come         = "Come here ". Bob will come move close to you
+  Bob moveto 23      : walk towards  waypoint #23
 
-Bob moveto 23      : walk towards  waypoint #23
+  Bob movetov <23,24,25>  :  walk towards point with coordinates <23,24,25> 
 
-Bob movetov <23,24,25>  :  walk towards point with coordinates <23,24,25> 
-
-Bob flytov <23,24,25>  :  fly towards point <23,24,25> in region
-
-Bob movetovr <23,24,25>  <23,24,25>   : walk to a random point between the points   <23,24,25>  <23,24,25>  
-
-runtovr <23,24,25>  <23,24,25>  : same as above, but run
-
+  Bob flytov <23,24,25>  :  fly towards point <23,24,25> in region
+  Bob movetovr <23,24,25>  <23,24,25>   : walk to a random point between the points   <23,24,25>  <23,24,25>  
+  runtovr <23,24,25>  <23,24,25>  : same as above, but run
+```
 ** Note: never leave spaces in coordinate vectors, i.e. <23,24,25> NOT <23, 24, 25> **
 
 ## Sit commands
 
 The NPC can sit on objects. The way it works is as follows:
-
+```
 Bob use chair              : Bob will attempt to find an object named "chair" (Object Name) near him and try to sit on it if its transparency (alpha) is less than 100%. Since by convention poseballs turn transparent when users sit on them, this ensures that Bob will not sit on an already-occupied poseball. 
 
 Bob stand                    : Bob will stand up if he is sitting
-
+```
 ## Variables
 Variables can be used with IF commands for more complex scenarios
-
+```
 setvar foo 13                : set variable foo to be 13  . Only string variables are supported. Variables can be used in if blocks
 
 setvar foo                     : (blank) set variable foo to the empty string. The empty string is the default value if a command does not exit
-
+```
 ## Flow control with IF commands
 There is support for multiple levels of IF blocks. blocks end with "end-if". There is no "else" command, but you can usually achieve the same effect with "jump" commands
-
+```
 if name-is bob alice             : if the npc's name is Bob or alice
    use dance                            : Sit on the poseball object named "dance"
 end-if                                        : always end IF blocks with end-if.  You  can nest if blocks
@@ -130,20 +124,21 @@ if-not name-is Bob              : Example of negative if
 if-prob 0.3                              : if with random probabilty 0.3 (the if block will be executed 30% of the time)
 
 if var-is party 1                   : Will execute the if variable foo is  13
-
+```
 Jump command.  You can use the syntax @label to create labels in your notecards. The syntax is:
-
+```
 jump myLabel   :  like "jump" in LSL or "goto" in other languages. the label should be on a line by itself prefixed with '@' like this:
-
+```
 @myLabel
 
 ## Useful script commands
+```
 wait 200                : wait 200 seconds
 
 waitvar foo 13     : wait until the variable foo gets the value 13
 
 waitvar foo          : wait until the variable foo is empty.
-
+```
 
 
 
@@ -151,25 +146,24 @@ waitvar foo          : wait until the variable foo is empty.
 
 The NPCs can find the paths between waypoints and walk from point A to point B. Because this is computationally intensive, only paths with less than 10 waypoints between are supported. The following pathfinding commands are supported:
 
-
+```
 Bob go to Bar   : this uses pathfinding  to go to the waypoint with the name "Bar"
-
 Bob go to            :  without  an argument, bob will print the names of waypoints  where it can go
-
 Bob goto 13       : go to waypoint #13 
-
+```
 
 ## Other commands
+```
 Bob say hi                            : Says "hi" on public channel 
-
 Bob saych 90 blablah                   : say "blablah" on channel 90
-
-
+```
+```
 Bob msgatt  attachment_command 12 13 14 15  
+```
 Uses osMessageAttachements to send the message "attachment_command" to attachments at attach points 12 13 14 15. 
 This can be useful for scripting NPC attachments. Read the OSSL docs of osMessageAttachments() for more. 
 
-
+```
 Bob lookat me               : attempts to look at you 
 Bob lookat <x,y,z>          : look towards point x,y,z
 Bob lookat Bar                : look towards the waypoint named "Bar"
@@ -192,12 +186,10 @@ Bob run-notecard my_script.scr           : execute the contents of the notecard 
 
 Bob stop-script                                      :  stop executing the notecard script
 
-
 Bob dress  swimming                           :  You can have multiple appearance notecards per NPC. This will attempt to load the appearance notecard named APP_bob_swimming from the controller's inventory. 
 
-
 Bob batch say hi ; wait 10; say bye  : executes multiple commands , separated by ";"
-
+```
 
 
 ## Extensions
