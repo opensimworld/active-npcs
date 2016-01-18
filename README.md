@@ -7,7 +7,7 @@ hg.osgrid.org:80:OpenSimWorld
 (move down near the bunker to find the package)
 
 
-==Installation==
+# Installation
 
 The controller requires OSSL functions to work. Apart from the osNpc*() functions you should also enable osListeRegex(), osGetNotecard(), osMessageAttachments().   The controller uses channel 68 for all its functions. 
 
@@ -15,11 +15,11 @@ In order to set the names of your NPCs , edit the __npc_names notecard, and add 
 
 To create an NPC, wear the "Listener" object in your RIGHT PEC. The listener is an object that all your NPCs have. It listens to the local chat for commands and sends them to the NPC controller.  After wearing the listener, move within 20 meters  near the controller,  click on the controller, select SaveNPC and then the name of the NPC you wish to create.  You should see a message "Appearance saved to APP_xxxx" . This means your appearance has been saved in a notecard inside the controller. Your NPCs can have multiple appearances (more on this later).  
 
-You can now load your NPC. Click the controller, click LoadNPC, then click the name of the NPC to load.  If all has gone well, your NPC should now respond to commands. Try "<name> come" or "<name> follow me"  to test it.  There are many commands you can use to have your NPCs do things. 
+You can now load your NPC. Click the controller, click LoadNPC, then click the name of the NPC to load.  If all has gone well, your NPC should now respond to commands. Try "[name] come" or "[name] follow me"  to test it.  There are many commands you can use to have your NPCs do things (see section below). 
 
 
 
-==Creating waypoints== 
+# Creating waypoints
 
 You can use the controller to create paths within your region, and the NPCs can wander along those paths. In addition, you can have them do interesting actions whenever they reach specific points by creating "scenario" notecards. 
 
@@ -43,9 +43,9 @@ To save the changes in the controller notecards, select "SaveCards" from the HUD
 After creating the map, it is possible to have the NPCs walk to specific waypoints. For example, if you have a waypoint named "Bar" , you can ask an NPC to go there (but only if it is up to 10 hops away), like this: "Bob go to Bar"
 
 
-== NPC supported commands == 
+# NPC supported commands 
 
-The NPCs support a number of commands.  You can give these commands through the public chat.  The syntax is:  <npc-firstname> <command>
+The NPCs support a number of commands.  You  give these commands through the public chat when the NPC is near you.  The syntax is:  [npc-firstname] [command]
 For example, assuming our NPC is called Bob: 
 
 Bob come
@@ -81,7 +81,7 @@ In order to add a scenario to a waypoint, create a notecard with the name format
 For example the _10.scr notecard will be executed at waypoint #10, _11.scr at waypoint #11 and so on. Waypoints start at #0. You can find the waypoint number on top of the pegs when editing waypoints.
 
 
-==List of NPC commands==
+# List of NPC commands
 
 These commands must be preceded by the name of the NPC. Here we assume our NPC is called "Bob"
 
@@ -99,7 +99,7 @@ runtovr <23,24,25>  <23,24,25>  : same as above, but run
 
 ** Note: never leave spaces in coordinate vectors, i.e. <23,24,25> NOT <23, 24, 25> **
 
-=== Sit commands=== 
+## Sit commands
 
 The NPC can sit on objects. The way it works is as follows:
 
@@ -107,14 +107,14 @@ Bob use chair              : Bob will attempt to find an object named "chair" (O
 
 Bob stand                    : Bob will stand up if he is sitting
 
-=== Variables. ===
+## Variables
 Variables can be used with IF commands for more complex scenarios
 
 setvar foo 13                : set variable foo to be 13  . Only string variables are supported. Variables can be used in if blocks
 
 setvar foo                     : (blank) set variable foo to the empty string. The empty string is the default value if a command does not exit
 
-===Flow control with IF commands===
+## Flow control with IF commands
 There is support for multiple levels of IF blocks. blocks end with "end-if". There is no "else" command, but you can usually achieve the same effect with "jump" commands
 
 if name-is bob alice             : if the npc's name is Bob or alice
@@ -133,7 +133,7 @@ jump myLabel   :  like "jump" in LSL or "goto" in other languages. the label sho
 
 @myLabel
 
-== Useful script commands == 
+## Useful script commands
 wait 200                : wait 200 seconds
 
 waitvar foo 13     : wait until the variable foo gets the value 13
@@ -143,7 +143,7 @@ waitvar foo          : wait until the variable foo is empty.
 
 
 
-== Pathfinding commands == 
+## Pathfinding commands
 
 The NPCs can find the paths between waypoints and walk from point A to point B. Because this is computationally intensive, only paths with less than 10 waypoints between are supported. The following pathfinding commands are supported:
 
@@ -155,7 +155,7 @@ Bob go to            :  without  an argument, bob will print the names of waypoi
 Bob goto 13       : go to waypoint #13 
 
 
-== Other commands == 
+## Other commands
 Bob say hi                            : Says "hi" on public channel 
 
 Bob saych 90 blablah                   : say "blablah" on channel 90
@@ -196,7 +196,7 @@ Bob batch say hi ; wait 10; say bye  : executes multiple commands , separated by
 
 
 
-==Extensions==
+## Extensions
 
 You can create extensions with your own commands.  Extensions are scripts that are placed in child objects linked to the controller. The default NPC controller object already contains an extension (the little green  box). The script in it shows how extensions parse the data sent from the controller (through link_message)  and how they can respond.
 
