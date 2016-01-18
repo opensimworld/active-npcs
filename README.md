@@ -59,7 +59,7 @@ You can have the NPCs execute these commands whenever they reach a waypoint by c
 The following control commands are supported in  notecards:  if, if-not, jump
  
 Example of a notecard:
-
+```
   if name-is Bob Alice
    say hi
    say i am either Bob or Alice
@@ -71,8 +71,9 @@ Example of a notecard:
   say i am alice and i 'm now leaving
   @outofhere
   leave
+```
 
-This examples shows how to use if blocks, the jump command and how to create labels like @outofhere
+This example shows how to use if blocks, the jump command and how to create labels like @outofhere
 
 As you see, in notecard scripts, the name of the NPC is omitted. It is replaced with the name of the NPC automatically, for example when Bob runs this notecards "say hi" becomes "Bob say hi". 
 
@@ -110,7 +111,7 @@ Variables can be used with IF commands for more complex scenarios
 ```
 setvar foo 13                : set variable foo to be 13  . Only string variables are supported. Variables can be used in if blocks
 
-setvar foo                     : (blank) set variable foo to the empty string. The empty string is the default value if a command does not exit
+setvar foo                     :  set variable foo to the empty string. The empty string is the default value if a variable does not exist
 ```
 ## Flow control with IF commands
 There is support for multiple levels of IF blocks. blocks end with "end-if". There is no "else" command, but you can usually achieve the same effect with "jump" commands
@@ -123,13 +124,13 @@ if-not name-is Bob              : Example of negative if
 
 if-prob 0.3                              : if with random probabilty 0.3 (the if block will be executed 30% of the time)
 
-if var-is party 1                   : Will execute the if variable foo is  13
+if var-is party 1                   : Will execute the if variable party is "1"
 ```
 Jump command.  You can use the syntax @label to create labels in your notecards. The syntax is:
 ```
 jump myLabel   :  like "jump" in LSL or "goto" in other languages. the label should be on a line by itself prefixed with '@' like this:
-```
 @myLabel
+```
 
 ## Useful script commands
 ```
@@ -164,23 +165,24 @@ Uses osMessageAttachements to send the message "attachment_command" to attachmen
 This can be useful for scripting NPC attachments. Read the OSSL docs of osMessageAttachments() for more. 
 
 ```
-Bob lookat me               : attempts to look at you 
-Bob lookat <x,y,z>          : look towards point x,y,z
-Bob lookat Bar                : look towards the waypoint named "Bar"
+Bob lookat me             : attempts to look at you 
+Bob lookat <x,y,z>       : look towards point x,y,z
+Bob lookat Bar           : look towards the waypoint named "Bar"
 
-Bob anim dance              : play animation "dance" . the animation must be in the inventory of the controller object
+Bob anim dance           : play animation "dance" . the animation must be in the inventory of the controller object
 
-Bob light                             :  turn on/off a light the NPCs have on them
+Bob light                :  turn on/off a light the NPCs have on them
 
 Bob follow me            : self-explanatory
+
 Bob follow  Alice        : follow alice around. Only the first name of the other avatar is needed
 
 Bob fly with me         : self-explanatory 
 Bob fly with alice      : fly with another user
 
-Bob stop                  :  Stops his animation and his movement.  and stops following you
+Bob stop                :  Stops his animation and his movement.  and stops following you
 
-Bob leave                    : start wandering  between waypoints
+Bob leave               : start wandering  between waypoints
 
 Bob run-notecard my_script.scr           : execute the contents of the notecard my_script.scr (the notecard must be in the controller inventory
 
