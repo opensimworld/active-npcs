@@ -98,9 +98,7 @@ Variables can be used with IF commands for more complex scenarios
 ```
 setvar foo 13                : set variable foo to be 13  . Only string variables are supported. Variables can be used in if blocks
 
-setvar foo                     :  set variable foo to the empty string. The empty string is the default value if a variable does not
-
-exist
+setvar foo                     :  set variable foo to the empty string. The empty string is the default value if a variable does not exist
 ```
 
 ## Flow control with IF commands
