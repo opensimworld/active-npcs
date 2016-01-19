@@ -223,13 +223,16 @@ After creating the map, it is possible to have the NPCs walk to specific waypoin
 
 ## Extensions
 
-You can create extensions with your own commands.  Extensions are scripts that are placed in child objects linked to the controller. The default NPC controller object already contains an extension (the little green  box). The script in it shows how extensions parse the data sent from the controller (through link_message)  and how they can respond.
+You can create extensions with your own commands.  Extensions are scripts that are placed in child objects linked to the controller.  Commands that are not processed by the NPC controller are sent via link_message to the extensions for processing. The extensions can then send back commands to the NPC controlle. The default NPC controller object already contains an extension that implements the "help" command (the little green  box). The script in it shows how extensions parse the data sent from the controller (through link_message)  and how they can respond.
 
-In addition , you can use your own scripts to send commands directly to the NPC controller. The NPC controller listens at channel 68.
+In addition, you can use your own scripts to send commands directly to the NPC controller from any object. The NPC controller listens at channel 68.
 The format of the command is:
 ```
 ! 0000 UUUU Bob say hi
 ```
-i.e. you  prefix the command that you would normally give to the NPC through the chat by prefixing it with "! 0000 UUUU " and sending it to channel 68.
+i.e. you  prefix the command that you would normally give to the NPC through the chat by prefixing it with "! 0000 UUUU " and sending it to channel 68. For commands such as "Bob follow me" "0000" can must be replaced with the  uuid if the avatar giving the command. 
 
 
+# Technical
+
+The controller runs through a single timer, that updates the states of the NPCs every 5 seconds. This allows it to be extremely lightweight, as it does not block processing, but also causes small delays expected between commands. 
