@@ -197,6 +197,16 @@ Bob dress               : load the appearance from notecard "APP_bob" (The defau
 You can have multiple appearance notecards per NPC, just rename their appearance notecard from "APP_bob" to "APP_bob_your-name" 
 
 
+## Extras
+
+The controller checks the number of visitors in your region every 2 minutes. If there are no visitors in the region it will stop executing commands thus avoiding unnecessary load to the region. In addition, it keeps track of the  latest visitors, giving you a log:
+
+```
+Bob seen all    : will print everyone who visited
+Bob seen foo    : will print information about foo
+```
+
+
 # Creating waypoints
 
 You can use the controller to create paths within your region, and the NPCs can wander along those paths. In addition, you can have them do interesting actions whenever they reach specific points by creating "scenario" notecards. 
@@ -233,6 +243,6 @@ The format of the command is:
 i.e. you  prefix the command that you would normally give to the NPC through the chat by prefixing it with "! 0000 UUUU " and sending it to channel 68. For commands such as "Bob follow me" "0000" can must be replaced with the  uuid if the avatar giving the command. 
 
 
-# Technical
+# Technical Notes
 
 The controller runs through a single timer, that updates the states of the NPCs every 5 seconds. This allows it to be extremely lightweight, as it does not block processing, but also causes small delays expected between commands. 
