@@ -8,6 +8,8 @@ You can get the latest OSWNPC package from the OpenSimWorld region in OSGrid, wh
 
 (move down near the bunker to find the package)
 
+Please send questions and comments here: http://opensimworld.com/forum/viewtopic.php?id=2
+
 
 # Installation
 
