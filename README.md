@@ -233,7 +233,7 @@ After creating the map, it is possible to have the NPCs walk to specific waypoin
 
 ## Extensions
 
-You can create extensions with your own commands.  Extensions are scripts that are placed in child objects linked to the controller.  Commands that are not processed by the NPC controller are sent via link_message to the extensions for processing. The extensions can then send back commands to the NPC controlle. The default NPC controller object already contains an extension that implements the "help" command (the little green  box). The script in it shows how extensions parse the data sent from the controller (through link_message)  and how they can respond.
+You can add extra commands with extension scripts.  Extensions are scripts that are placed in the  controller. Commands that are not processed by the NPC controller are sent via link_message to the extensions for processing. The extensions can then send back commands to the NPC controller. The default NPC controller object already contains an extension that implements the "help" command (the "..Extension" script). The script in it shows how extensions parse the data sent from the controller (through link_message)  and how they can respond.
 
 In addition, you can use your own scripts to send commands directly to the NPC controller from any object. The NPC controller listens at channel 68.
 The format of the command is:
