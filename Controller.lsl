@@ -1,12 +1,11 @@
 integer channel = 68;
 integer PEG_CHAN=699;
-
 integer TIMER_INTERVAL=5; // how often to run the timer
 
-// Add the first names of your NPCs here. Last name is always "NPC"
-list availableNames = [];//"Kelvin", "Berton", "Sartorius"];
 
+// Nothing to edit here, see https://github.com/opensimworld/active-npcs for configuration
 
+list availableNames = [];
 // These will be loaded from notecards
 list wNodes = [];
 list wLinks = [];
@@ -16,7 +15,6 @@ list wNodeNames=[];
 list flyTargets = [];
 
 list menuItems = ["SaveNPC", "LoadNPC", "RemoveNPC", "RemoveAll", "LoadAll", "ReConfig","InitCmds",  "DumpData", "TimerOnOff","Close"];
-
 
 string userInputState ="";
 integer gListener;
@@ -570,6 +568,7 @@ integer ProcessNPCCommand(string inputString)
             setVar(cmd2, cmd3);
             return 0;
     }
+
     else if (cmd1 == "if" || cmd1 == "if-not" || cmd1=="if-prob")
     {
         integer res = 0;
@@ -860,6 +859,8 @@ integer ProcessNPCCommand(string inputString)
     }
     else if (cmd1 == "light")
         osMessageAttachments(uNPC, "light", [ATTACH_RIGHT_PEC], 0);
+    else if (cmd1 == "sound")
+        osMessageAttachments(uNPC, "sound " + cmd2+" "+llList2String(tokens, 6) , [ATTACH_RIGHT_PEC], 0);
     else if (cmd1 == "batch")
     {
         // Run multiple commands from the chat, separated by ";"   --- replaces any running script
@@ -1241,8 +1242,6 @@ default
                             
                             if (shouldMove>0)
                             {
-                               if (llFrand(1.0) < 0.03)
-                                   ExecScriptLine(llList2String(aviNames, g), "get fart");
                                MoveToNewTarget(g);
                             }
             }
@@ -1730,11 +1729,6 @@ default
             llResetScript();
         }
     }    
-    
-    on_rez(integer n)
-    {
-        llResetScript();
-    }
 
 }
 
