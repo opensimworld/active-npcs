@@ -244,7 +244,28 @@ The format of the command is:
 ```
 i.e. you  prefix the command that you would normally give to the NPC through the chat by prefixing it with "! 0000 UUUU " and sending it to channel 68. For commands such as "Bob follow me" "0000" can must be replaced with the  uuid if the avatar giving the command. 
 
+Another way to interact with the controller is the SETVAR command. You can set or change a variable in the controller by 
+talking to channel 68:
+
+llSay(68,  "SETVAR foo 1");
+
+This will set the variable "foo" to "bar" (Note SETVAR in capitals). You can then use this variable from a notecard like this: 
+
+```
+@start
+say Waiting for variable ...
+waitvar foo bar
+say Variable  was updated! now let's do something!
+wait 10
+setvar foo 0
+jump @start
+```
+
+This allows you to create interactions with other objects in your region.
+
 
 # Technical Notes
 
 The controller runs through a single timer, that updates the states of the NPCs every 5 seconds. This allows it to be extremely lightweight, as it does not block processing, but also causes small delays expected between commands. 
+
+
