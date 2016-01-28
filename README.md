@@ -247,7 +247,7 @@ i.e. you  prefix the command that you would normally give to the NPC through the
 Another way to interact with the controller is the SETVAR command. You can set or change a variable in the controller by 
 talking to channel 68:
 
-llSay(68,  "SETVAR foo 1");
+llSay(68,  "SETVAR foo bar");
 
 This will set the variable "foo" to "bar" (Note SETVAR in capitals). You can then use this variable from a notecard like this: 
 
