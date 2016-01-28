@@ -1730,6 +1730,11 @@ default
             llResetScript();
         }
     }    
+    
+    on_rez(integer n)
+    {
+        llResetScript();
+    }
 
 }
 
