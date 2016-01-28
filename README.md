@@ -258,7 +258,7 @@ waitvar foo 1
 say Variable  was updated! now let's do something!
 wait 10
 setvar foo 0
-jump @start
+jump start
 ```
 
 This allows you to create interactions with other objects in your region.
