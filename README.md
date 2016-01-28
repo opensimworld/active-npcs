@@ -156,7 +156,9 @@ Bob goto 13     : go to waypoint #13
 Bob say hi                            : Says "hi" on public channel 
 Bob saych 90 blablah                  : say "blablah" on channel 90
 Bob teleport Bar                      : Teleports bob to the "Bar" waypoint
+Bob teleport <23,30,40>                      : Teleports to a point. REMEMBER to never leave spaces between coordinates
 ```
+
 ```
 Bob msgatt  attachment_command 12 13 14 15  
 ```
@@ -190,7 +192,7 @@ Bob run-notecard my_script.scr     : execute the contents of the notecard my_scr
 
 Bob stop-script         :  stop executing the notecard script
 
-Bob batch say hi ; wait 10; say bye  : executes multiple commands , separated by ";"
+Bob batch say hi ; wait 10; say bye       : executes multiple commands , separated by ";"
 
 Bob dress  swimming     : load the appearance from notecard "APP_bob_swimming"
 
@@ -211,7 +213,7 @@ Bob seen foo    : will print information about foo
 
 # Creating waypoints
 
-You can use the controller to create paths within your region, and the NPCs can wander along those paths. In addition, you can have them do interesting actions whenever they reach specific points by creating "scenario" notecards. 
+You can use the controller to create waypoints and paths between them within your region, and the NPCs can wander along those paths. In addition, you can have them do interesting actions whenever they reach specific waypoints by creating "scenario" notecards. 
 
 Each waypoint has a number (starting from 0) and optionally a name. Waypoints can be connected to other waypoints, thus creating a map (graph) between them. The NPC can then wander between the waypoints (Use "Bob leave" to make them start wandering), and they can also go from waypoint A to waypoint B (if there are appropriate links between the two).
 
