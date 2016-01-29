@@ -223,9 +223,11 @@ If you already have a map, click RezPegs on the HUD. This will rez  a peg in eac
 
 To add a waypoint, move your avatar to the desired position, and select "AddPeg" from the HUD. A peg should appear in front of you. To create a second waypoint, move to another position, and  AddPeg again. 
 
-To link two waypoints, click on the first one, then click on the second one and select "LinkPegs" from the popup. 
+To link two waypoints X and Y, click on the first one (X), then click on the second one (Y). The latest pop up dialog should say "Current peg: Y previous X". To link them, and select "LinkPegs" from the popup dialog.  *Ignore or close all the other dialogs*
 
-To unlink two waypoints, click on the first one, then click on the second one and select "UninkPegs" from the popup. 
+To unlink two waypoints, again, click on the first one, then click on the second one and select "UninkPegs" from the popup. 
+
+*Important: Whenever you change  the positions of some waypoints,  always do "ScanPegs" first **before** linking or unlinking them* 
 
 To set a name for a waypoint, click the peg, select "SetName", and enter the name (E.g. "Bar")
 
