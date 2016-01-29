@@ -237,6 +237,8 @@ To save the changes in the controller, click the HUD and select "SaveCards".  To
 
 After creating the map, it is possible to have the NPCs walk to specific waypoints. For example, if you have a waypoint named "Bar" , you can ask an NPC to go there (but only if it is up to 10 hops away), like this: "Bob go to Bar"
 
+Removing waypoints is not supported , as it would break the numbering and would mess up the notecard naming scheme. If you want to start over with an empty map, edit the __waypoints and __links notecards,  remove all their contents, and then select "Reconflg" from the controller. Although deleting is not supported, you can always unlink a peg from all other pegs, in which case the NPCs will never go there. You can then keep that peg or move it around for future use. 
+
 ## Extensions
 
 You can add extra commands with extension scripts.  Extensions are scripts that are placed in the  controller. Commands that are not processed by the NPC controller are sent via link_message to the extensions for processing. The extensions can then send back commands to the NPC controller. The default NPC controller object already contains an extension that implements the "help" command (the "..Extension" script). The script in it shows how extensions parse the data sent from the controller (through link_message)  and how they can respond.
