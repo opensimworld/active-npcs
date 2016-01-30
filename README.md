@@ -268,7 +268,9 @@ llRegionSay(68,  "SETVAR foo 1");
 say Waiting for variable ...
 waitvar foo 1
 say Variable foo is now 1! Let's do something interesting!
+anim dance1
 wait 10
+stop
 setvar foo 0
 jump start
 ```
