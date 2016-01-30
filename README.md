@@ -198,7 +198,7 @@ Bob dress  swimming     : load the appearance from notecard "APP_bob_swimming"
 
 Bob dress               : load the appearance from notecard "APP_bob" (The default appearance notecard)
 ```
-You can have multiple appearance notecards per NPC, just rename their appearance notecard from "APP_bob" to "APP_bob_your-name" 
+You can have multiple appearance notecards per NPC, just rename their appearance notecard from "APP_bob" to "APP_bob_dressName" 
 
 
 ## Extras
