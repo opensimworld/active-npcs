@@ -241,21 +241,27 @@ Removing waypoints is not supported , as it would break the numbering and would 
 
 ## Extensions
 
-You can add extra commands with extension scripts.  Extensions are scripts that are placed in the  controller. Commands that are not processed by the NPC controller are sent via link_message to the extensions for processing. The extensions can then send back commands to the NPC controller. The default NPC controller object already contains an extension that implements the "help" command (the "..Extension" script). The script in it shows how extensions parse the data sent from the controller (through link_message)  and how they can respond.
+You can add extra NPC commands with extension scripts.  Extensions are scripts that are placed in the controller object.  Commands that are not processed by the NPC controller are sent via link_message to the extensions for processing. The extensions can also use link_message (with number parameter >=0) to send back commands to the NPC controller. The default NPC controller object already contains an extension that implements the "help" command (the "..Extension" script). The script in it shows how extensions parse the data sent from the controller (through link_message)  and how they can respond.
 
-In addition, you can use your own scripts to send commands directly to the NPC controller from any object. The NPC controller listens at channel 68.
-The format of the command is:
+The format of the commands send through link_message (or through channel 68) is:
 ```
-! 0000 UUUU Bob say hi
+! 0000 UUUU Bob help
 ```
-i.e. you  prefix the command that you would normally give to the NPC through the chat by prefixing it with "! 0000 UUUU " and sending it to channel 68. For commands such as "Bob follow me" "0000" can must be replaced with the  uuid if the avatar giving the command. 
+i.e. commands  that you would normally give to the NPC through the chat are prefixed with "! 0000 UUUU "  and sent to channel 68. For commands such as "Bob follow me" which require knowing which avatar sent the command, "0000"  must be replaced with the uuid if the avatar giving the command. 
+
+## Sending commands from other objects
+
+In addition, you can use your own scripts to send commands directly to the NPC controller from any object. The NPC controller listens on channel 68. Just remember to send the command region-wide, as your object is likely to be far away from the controller:
+```
+llRegionSay(68, "! 0000 UUUU Bob say hello");
+```
 
 Another way to interact with the controller is the SETVAR command. You can set or change a variable in the controller by 
-talking to channel 68:
+talking to channel 68. (This command does not require prefixing):
 
 llRegionSay(68,  "SETVAR foo 1");
 
-(Note we use  SETVAR in capitals. Also, we use llRegionSay, since most of the time the controller object will be too far to listen to the local chat). This will set the variable "foo" to "1" . You can then use this variable from a notecard like this: 
+(Note we use  SETVAR in capitals. This will set the variable "foo" to "1" . You can use this variable from a notecard like this: 
 
 ```
 @start
@@ -266,8 +272,6 @@ wait 10
 setvar foo 0
 jump start
 ```
-
-This allows you to create interactions with other objects in your region.
 
 
 # Technical Notes
