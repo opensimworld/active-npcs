@@ -8,6 +8,9 @@ You can get the latest OSWNPC package from the OpenSimWorld region in OSGrid, wh
 
 (move down near the bunker to find the package)
 
+
+Please visit https://github.com/opensimworld/active-npcs/edit/master/README.md for an up-to-date version of this documentation.
+
 Please send questions and comments here: http://opensimworld.com/forum/viewtopic.php?id=2
 
 
