@@ -1,7 +1,7 @@
 integer channel = 68;
 integer PEG_CHAN=699;
 integer TIMER_INTERVAL=5; // how often to run the timer
-
+integer autoLoadOnReset=0;
 
 // Nothing to edit here, see https://github.com/opensimworld/active-npcs for configuration
 
@@ -95,6 +95,15 @@ ReloadConfig()
     availableNames = llParseString2List(osGetNotecard("__npc_names"), [" ", "\n", ","] , []);
     flyTargets = llParseString2List(osGetNotecard("__fly_targets"), [" ", "\n", ""] , []);
     llOwnerSay("__npc_names: "+llList2CSV(availableNames));
+    string ncName = "__config";
+    autoLoadOnReset=0;
+    if (llGetInventoryType(ncName) == INVENTORY_NOTECARD)
+    {
+        list tok = llParseString2List(osGetNotecard("__config"), ["=", "\n"] , []);
+        integer idx = llListFindList(tok, "AutoLoadOnReset");
+        if (idx >=0 && ((integer)llList2String(tok, idx+1))==1 )
+                autoLoadOnReset = 1;
+    }
 }
 
 
@@ -184,6 +193,43 @@ doRemoveNpc(string who)
         osNpcRemove(u);
 }
 
+doLoadAll()
+{
+            integer i;
+            // If reloading, we unsit them from poseballs
+            avis = osGetAvatarList();
+            llOwnerSay(llList2CSV(avis));
+            howmany = llGetListLength(avis);
+            for (i =0; i < howmany; i+=3)
+            {
+                if (osIsNpc(llList2Key(avis, i)))
+                {
+                    osNpcStand(llList2Key(avis, i));
+                }
+            }
+            for (i=0; i < llGetListLength(availableNames);i++)
+            {
+                doLoadNPC(llList2String(availableNames, i));
+            }
+    
+}
+
+
+doInitCmds()
+{
+    string notecard= "__initcommands";
+    integer i;
+    for(i=0; i<=osGetNumberOfNotecardLines(notecard); i++) {        
+        string line = llStringTrim(osGetNotecardLine(notecard, i), STRING_TRIM);
+        if (llStringLength(line)>0 && line != "")
+        {
+            line = "! 0000 UUUU " + line;
+            llOwnerSay("InitCmd="+line);
+            ProcessNPCCommand(line);
+        }
+    }
+
+}
 
 setVar(string cmd2, string cmd3)
 {
@@ -1145,6 +1191,15 @@ default
         RescanAvis();
         greetedAvis = [];
         scriptVars = [];
+        
+        if (autoLoadOnReset)
+        {
+            doLoadAll();
+            llSleep(10); // Need to wait for their listeners attachments to start
+            doInitCmds();
+            llSleep(10);
+        }
+        
         llSetTimerEvent(TIMER_INTERVAL);
     }
     
@@ -1169,7 +1224,6 @@ default
                 advanceScript =0;
                 aviIndex = g;
                 npc = llList2Key(aviUids, g);
-                //name = llList2String(aviNames, g); 
                 string status = llList2String(aviStatus, g); 
 
                 if (status == "follow" || status == "flyfollow")
@@ -1214,12 +1268,14 @@ default
                 else if (status == "wander")
                 {
                     if (llGetUnixTime()  > llList2Integer(aviAlarm, g) +1)
-                        {
+                    {
                             integer curNode = llList2Integer(aviNodes, g);
                             integer i;
                             integer shouldMove =1;
-                            // avoid looping back to the same script while we are about to leave
-                            if ( llList2Integer(aviPrevNodes, g)>=0)
+                            llMessageLinked(LINK_THIS, -1, "WAYPOINT " + (string)curNode+" "+llList2String(aviNames, g), npc);
+                            
+                            // avoid looping back to the same script while we are about to leave                            
+                            if (llList2Integer(aviPrevNodes, g)>=0)
                             {
                                 if (llListFindList(startedScripts, curNode)>=0)
                                 {
@@ -1244,7 +1300,7 @@ default
                             {
                                MoveToNewTarget(g);
                             }
-            }
+                    }
                 }
                 else if (status == "godfly")
                 {
@@ -1256,7 +1312,7 @@ default
                         osSetSpeed(npc, 0.5);
                         integer theight = 10;
                         vector p = osNpcGetPos(npc);
-                        SetScriptAlarm(g, GetWalkTime(llVecDist(p, nd)));
+                        SetScriptAlarm(g, GetWalkTime(llVecDist(p, nd))/2);
                         osNpcMoveToTarget(npc, nd +  <llFrand(1),llFrand(1),theight>, flag);
                         
                     }
@@ -1481,39 +1537,14 @@ default
         else if (mes == "LoadAll")
         {
             llSetTimerEvent(0);
-            integer i;
-            avis = osGetAvatarList();
-            llOwnerSay(llList2CSV(avis));
-            howmany = llGetListLength(avis);
-            for (i =0; i < howmany; i+=3)
-            {
-                if (osIsNpc(llList2Key(avis, i)))
-                {
-                    osNpcStand(llList2Key(avis, i));
-                }
-            }
-            
-            for (i=0; i < llGetListLength(availableNames);i++)
-            {
-                doLoadNPC(llList2String(availableNames, i));
-            }
+            doLoadAll();
             llSetTimerEvent(TIMER_INTERVAL); 
         }
         else if (mes == "InitCmds")
         {    
-            string notecard= "__initcommands";
-            integer i;
             llSetTimerEvent(0);
-            for(i=0; i<=osGetNumberOfNotecardLines(notecard); i++) {
-                
-                string line = llStringTrim(osGetNotecardLine(notecard, i), STRING_TRIM);
-                if (llStringLength(line)>0 && line != "")
-                {
-                    line = "! 0000 UUUU " + line;
-                    ProcessNPCCommand(line);
-                }
-            }
-            llSetTimerEvent(TIMER_INTERVAL);
+            doInitCmds();
+            llSetTimerEvent(TIMER_INTERVAL);    
         }
         else if (mes == "TimerOnOff")
         {
@@ -1731,4 +1762,4 @@ default
     }    
 
 }
-
+        
