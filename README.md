@@ -247,6 +247,16 @@ AutoLoadOnReset=0
 ```
 Change AutoLoadOnReset=0 to AutoLoadOnReset=1 to make the controller rez the NPCs on region restart or script reset. 
 
+The notecard __initcommands contains initial commands to give to the NPCs. These commands are executed automatically after auto-rezzing the NPCs when the controller is configured to rez on reset, or manually by clicking "InitCmds" from the controller menu. 
+
+You can use  __initcommands  to add commands that initialize your NPCs, and  should typically tell them to "leave" so that they begin wandering. An example of __initcommands is : 
+```
+Bob say I am rezzed!
+Bob teleport <64,64,22>
+Alice  teleport <128,64,22>
+Bob leave
+Alice leave
+```
 
 
 
