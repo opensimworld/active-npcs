@@ -239,6 +239,17 @@ After creating the map, it is possible to have the NPCs walk to specific waypoin
 
 Removing waypoints is not supported , as it would break the numbering and would mess up the notecard naming scheme. If you want to start over with an empty map, edit the __waypoints and __links notecards,  remove all their contents, and then select "Reconflg" from the controller. Although deleting is not supported, you can always unlink a peg from all other pegs, in which case the NPCs will never go there. You can then keep that peg or move it around for future use. 
 
+
+## Configuration
+Configurable options are added in the __config  notecard:
+```
+AutoLoadOnReset=0
+```
+Change AutoLoadOnReset=0 to AutoLoadOnReset=1 to make the controller rez the NPCs on region restart or script reset. 
+
+
+
+
 ## Extensions
 
 You can add extra NPC commands with extension scripts.  Extensions are scripts that are placed in the controller object.  Commands that are not processed by the NPC controller are sent via link_message to the extensions for processing. The extensions can also use link_message (with number parameter >=0) to send back commands to the NPC controller. The default NPC controller object already contains an extension that implements the "help" command (the "..Extension" script). The script in it shows how extensions parse the data sent from the controller (through link_message)  and how they can respond.
