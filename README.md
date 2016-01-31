@@ -80,6 +80,8 @@ These commands must be preceded by the name of the NPC. Here we assume our NPC i
   Bob moveto 23      : walk towards  waypoint #23
 
   Bob movetov <23,24,25>  :  walk towards point with coordinates <23,24,25> 
+  
+  Bob runtov <23,24,25>  :  run towards point with coordinates <23,24,25> 
 
   Bob flytov <23,24,25>  :  fly towards point <23,24,25> in region
   
@@ -90,7 +92,7 @@ These commands must be preceded by the name of the NPC. Here we assume our NPC i
   ** Note: never leave spaces in coordinate vectors, i.e. <23,24,25> NOT <23, 24, 25> **
 ```
 
-## Sit commands
+## Sit command
 
 The NPC can sit on objects. The way it works is as follows:
 ```
@@ -177,6 +179,8 @@ Bob lookat Bar           : look towards the waypoint named "Bar"
 
 Bob anim dance           : play animation "dance" . the animation must be in the inventory of the controller object
 
+Bob sound 1c8a3af2-6e5a-4807-a7a3-a42e5744217c 1.0   : The NPC will play the sound with the given UUID  at the volume specified by the second parameter (1.0 is max volume)
+
 Bob light                :  turn on/off a light the NPCs have on them
 
 Bob follow me            : self-explanatory
@@ -191,11 +195,13 @@ Bob stop                :  Stops his animation and his movement.  and stops foll
 
 Bob leave               : start wandering  between waypoints
 
+Bob setpath 0:1:3:5:1:0       : Walk through the given waypoints, i.e. walk to waypoint 0 , then to 1, then to 3, then to 5 etc. 
+
 Bob run-notecard my_script.scr     : execute the contents of the notecard my_script.scr (the notecard must be in the controller inventory
 
-Bob stop-script         :  stop executing the notecard script
+Bob batch say hi ; wait 10; say bye       : executes multiple commands one after the other. Commands are separated by ";"
 
-Bob batch say hi ; wait 10; say bye       : executes multiple commands , separated by ";"
+Bob stop-script         :  stop executing the notecard script
 
 Bob dress  swimming     : load the appearance from notecard "APP_bob_swimming"
 
