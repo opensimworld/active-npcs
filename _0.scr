@@ -1,0 +1,13 @@
+say Hi!
+say I feel like dancing
+anim dance1
+wait 10
+stop
+say I think  that's enough.
+say I am now going to pretend i m dying ...
+anim dead
+wait 5
+stop
+say I 'm not dead yet  dont worry ...
+say If you want to change this script, edit the notecard _0.scr  . If you dont want me to do anything here, remove the notecard.
+say  Goodbye now ... 
