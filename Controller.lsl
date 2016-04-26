@@ -819,14 +819,17 @@ integer ProcessNPCCommand(string inputString)
             tm = (integer)(tm + llFrand(tm2));
         SetScriptAlarm(idx,  tm);
     }
-    else if (cmd1 == "say")
+    else if (cmd1 == "say" || cmd1 == "shout")
     {
         // Say something on chat
         string txt = "";
         integer i;
         for (i=5; i < llGetListLength(tokens); i++)
             txt += llList2String(tokens,i) + " ";
-        osNpcSay(uNPC, txt);
+        if (cmd1 == "shout")
+            osNpcShout(uNPC, 0, txt);
+        else
+            osNpcSay(uNPC, txt);
     }
     else if (cmd1 == "saych")
     {
@@ -1047,6 +1050,11 @@ integer ProcessNPCCommand(string inputString)
             }
         }
         osNpcSay(uNPC, "I haven't seen "+ cmd2 + " around");
+    }
+    else if (cmd1 == "nearest")
+    {
+        integer n = GetNearestNode(osNpcGetPos(uNPC));
+        osNpcSay(uNPC, "Nearest waypoint is #"+n); 
     }
     else if (llGetSubString(cmd1,0,0) == "@")
         return 0;
@@ -1762,4 +1770,4 @@ default
     }    
 
 }
-        
+
