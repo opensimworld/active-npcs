@@ -52,6 +52,7 @@ integer prevPoint;
 list wayPoints;
 list wayNames;
 list wayLinks;
+list wayKeys;
 string name;
 key npc;
 key avi;
@@ -1059,8 +1060,14 @@ integer ProcessNPCCommand(string inputString)
     else if (llGetSubString(cmd1,0,0) == "@")
         return 0;
     else if (cmd1 != "")
+    {
+        if (llGetInventoryType(cmd1+".scr") == INVENTORY_NOTECARD)
+        {
+            ExecScriptLine(npcName , "run-notecard "+cmd1+".scr");
+        }
+        else
             llMessageLinked(LINK_THIS, -1, inputString, uNPC);
-            
+    }            
     return 1; // 1 means that this is a blocking command (i.e. the next command will be run in the next timer tick)
 }
 
@@ -1256,7 +1263,7 @@ default
                     
                     rotation rot = llList2Rot(userData,1);
                     float ang = llFrand(1.0);
-                    vector v = llList2Vector(userData,0) + <-0.7,0,0>*rot;
+                    vector v = llList2Vector(userData,0) + <-1.9,0,0>*rot;
                     float dist = llVecDist(osNpcGetPos(npc), v);
 
                     if  (status == "follow" && dist>50.)
@@ -1265,8 +1272,10 @@ default
                     }
                     else if  (dist>4)
                     {
-                        osNpcStopMoveToTarget(npc);
-                        osSetSpeed(npc, 1.0);
+                        //osNpcStopMoveToTarget(npc);
+                        if (osIsNpc(who))
+                            osSetSpeed(npc, .47);
+                        else osSetSpeed(npc, 1.0);
                         if (status == "flyfollow")                
                            osNpcMoveToTarget(npc, v+<0,0,2.>, OS_NPC_FLY );
                         else
@@ -1479,14 +1488,38 @@ default
             list ll = llParseString2List(str, ["|"] ,[]);
             string cmd1 = llList2String(ll, 0);
             integer num = llList2Integer(ll, 1);
+            
+            if (prevPoint >=0 && curPoint <0) 
+            {
+                if (prevPoint != num )
+                {
+                    curPoint = num;
+                    //llOwnerSay("Current peg="+curPoint);
+                    list btns = ["Close", "LinkPegs", "UnlinkPegs", "SetName"];
+                    llDialog(llGetOwner(), "First peg: "+ (string)curPoint+ " Second: "+(string)prevPoint, btns, 68);
+                }
+                else
+                {
+                    llOwnerSay("You clicked on the same point. Starting over");
+                    prevPoint = -1;
+                    curPoint = -1;
+                }
+            }
+            else
+            {
+                prevPoint = num;
+                curPoint = -1;
+                llOwnerSay("First peg: "+prevPoint + ". Click on second peg.");
+            }
+            
+            /*
             if (curPoint!= num)
             {
                 prevPoint = curPoint;
                 curPoint = num;
             }
-            //llOwnerSay("Current peg="+curPoint);
-             list btns = ["Close", "LinkPegs", "UnlinkPegs", "SetName"];
-            llDialog(llGetOwner(), "Current peg: "+ (string)curPoint+ " Previous: "+(string)prevPoint, btns, 68);
+            */
+
             return;
         }
         else if  (llGetSubString(mes, 0, 6) == "MARKER|")
@@ -1495,14 +1528,16 @@ default
             string cmd1 = llList2String(ll, 0);
             integer num = llList2Integer(ll, 1);
             vector pos = llList2Vector(ll, 2);
+            key tk = llList2Key(ll, 4);
             wayPoints = llListReplaceList(wayPoints, [pos], num,num);
+            wayKeys = llListReplaceList(wayKeys, [tk], num,num);
             llOwnerSay("Scanned peg "+ (string)num);
             return;
         }
         else if (mes == "ShowPegDialog")
         {
               list btns = ["Close", "RezPegs", "SaveCards", "AddPeg", "DeletePeg", "LinkPegs", "UnlinkPegs", "ScanPegs", "ClearPegs", "SetName"];
-              llDialog(llGetOwner(), "Current peg: "+ (string)curPoint+ " Previous: "+(string)prevPoint, btns, 68);
+              llDialog(llGetOwner(), "First peg: "+ (string)curPoint+ " Second peg: "+(string)prevPoint, btns, 68);
               return;
         }
 
