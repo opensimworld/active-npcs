@@ -211,6 +211,20 @@ Bob dress               : load the appearance from notecard "APP_bob" (The defau
 You can have multiple appearance notecards per NPC, just rename their appearance notecard from "APP_bob" to "APP_bob_dressName" 
 
 
+
+## Custom command notecards
+
+You can create custom commands with a command otecard , or with extension scripts (described below). To create a command notecard, enter the commands for the NPC to execute in a notecard, and save it into the controller's inventory with the name <command-name>.scr
+
+E.g. a dance command notecard would be named "dance.scr" and contain the following
+```
+say I love to dance!
+anim RockDance
+wait 600 800
+say oops, I am  tired...
+stop
+```
+
 ## Extras
 
 The controller checks the number of visitors in your region every 2 minutes. If there are no visitors in the region it will stop executing commands thus avoiding unnecessary load to the region. In addition, it keeps track of the  latest visitors, giving you a log:
