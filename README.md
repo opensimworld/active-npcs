@@ -160,8 +160,9 @@ Bob goto 13     : go to waypoint #13
 ```
 Bob say hi                            : Says "hi" on public channel 
 Bob saych 90 blablah                  : say "blablah" on channel 90
-Bob teleport Bar                      : Teleports bob to the "Bar" waypoint
-Bob teleport <23,30,40>                      : Teleports to a point. REMEMBER to never leave spaces between coordinates
+Bob shout Blah bleh
+Bob teleport Bar                            : Teleports bob to the waypoint named "Bar"
+Bob teleport <23,30,40>                     : Teleports to a point. REMEMBER to never leave spaces inside the vector string
 ```
 
 ```
