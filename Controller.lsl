@@ -545,6 +545,7 @@ integer ProcessNPCCommand(string inputString)
     {
         doStopNpc(idx, uNPC);
         userData=llGetObjectDetails((key)sendUid, [OBJECT_NAME,OBJECT_POS, OBJECT_ROT]);
+        osNpcStopMoveToTarget(uNPC);
         osTeleportAgent(uNPC, llList2Vector(userData, 1) + <1, 0, 0>, <1,1,1>);
         if (sendUid != NULL_KEY) // NOTE: a real avatar sent this command - stop processing our script
              aviScriptIndex  =  []+llListReplaceList(aviScriptIndex, -1, idx, idx);
@@ -587,8 +588,9 @@ integer ProcessNPCCommand(string inputString)
         
         if (cmd1 == "runtovr"|| cmd1 == "runtov")
         {
+            osSetSpeed(uNPC, 1.0);
             osNpcMoveToTarget(uNPC, v + <0,0,1>, OS_NPC_NO_FLY | OS_NPC_RUNNING);
-            SetScriptAlarm(idx, (integer)(GetWalkTime(dist)/2.0));
+            SetScriptAlarm(idx, (integer)(GetWalkTime(dist)/2.));
         }
         else
         {
