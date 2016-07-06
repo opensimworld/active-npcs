@@ -14,39 +14,57 @@ Please visit https://github.com/opensimworld/active-npcs/edit/master/README.md f
 Please send questions and comments here: http://opensimworld.com/forum/viewtopic.php?id=2
 
 
+
+# Contents
+
+The controller contains a number of items:
+
+* The controller script (..Controller). This is the single script that runs everything.
+* An example extension script (..Extension). This can be used to add commands to the system (explained below).
+* The Listener object. All our NPCs must wear this invisible object on their Right Pec. This object listens for commands from the local chat and forwards them to the controller script for processing.
+* The __npc_names notecard. This notecard contains the first names of the NPCs, one in each line. The last name is always "(NPC)" . After making changes to this notecard, select "Reconfig" from the controller menu.
+* The __initcommands notecard. This is a notecard with the commands that are executed when you click  "InitCmds" on the controller menu.
+* The __waypoints notecard. This contains a list of points in your region. The NPCs can walk from one point to the other, if they are connected (via the __links notecard) . *You do not need to edit this by hand. There is an HUD for editing the map*
+* The __links notecard. This contains a list of pairs of connected points. I.e. if you want to link point 1 to point 2, there will be a line "1,2" in the notecard. *You do not need to edit this by hand. There is an HUD for editing the map*
+* The __config notecard. This contains configuration ootions.
+* Command notecards. You can put a list of commands that the NPC will execute in a notecard named <command-name>.scr. You can then order your NPCs to execute them in the chat. E.g. if you create a notecard "dance.scr", you can say "Bob dance" to execute it.
+* Waypoint notecards. Notecards named _1.scr , _2.scr etc are executed automatically when the NPCs reach the waypoint number 1, number 2 etc. 
+* The appearance notecards are stored as APP_<firstname> for each NPC. You can also have multiple appearances per NPC (see below). 
+* The Waypoint HUD is used to edit the map and create/update the __waypoints and __links notecards
+
+
 # Installation
 
 The controller requires OSSL functions to work. Apart from the osNpc*() functions you should also enable: osListenRegex(), osGetNotecard(), osMessageAttachments(), osSetSpeed().   The controller uses channel 68 for all its functions. 
 
-Before you create an NPC, you need to add its name to the __npc_names notecard. Edit the __npc_names notecard, and add the *first* names of your NPCs, one at a line. The last name of your NPCs will always be (NPC). 
+Before you create a new NPC, you need to add their name to the __npc_names notecard. Edit the __npc_names notecard, and add the *first* name of your NPC, in a new line by itself. The last name of your NPCs will always be (NPC). 
 
-*After making any configuration changes in notecards,  reset the NPC controller scripts, or click on it and select "ReConfig"*.
+*After making changes in the notecard,  click on the controller and select "ReConfig"*.
 
-To create an NPC, first wear the "Listener" object in your RIGHT PEC. The Listener is an object that all your NPCs must wear. It listens to the local chat for commands and sends them to the NPC controller for processing.  After wearing the listener, move within 20 meters  near the controller,  click on the controller, select SaveNPC and then the name of the NPC you wish to create.  You should see a message "Appearance saved to APP_xxxx" . This means your appearance has been saved in a notecard inside the controller. 
-(Your NPCs can have multiple appearances - more on this later).
+To create an NPC appearance notecard, dress yourself as you want the NPC to look, and  wear the "Listener" object on your RIGHT PEC. The Listener is an object that  listens to the local chat for commands and sends them to the NPC controller for processing. When you are happy with your appearance and certain you are wearing the listener, move within 20 meters near the controller,  click on the controller, select SaveNPC, and then NPC you wish to create.  You should see a message "Appearance saved to APP_xxxx" in a few seconds. This means your appearance has been saved in a notecard inside the controller. 
 
-You can now load your NPC. Click the controller, click LoadNPC, then click the name of the NPC to load.  If all has gone well, your NPC should now respond to commands. Try "[name] come" or "[name] follow me"  to test it.  There are many commands you can use to have your NPCs do things.
+You can now load your NPC to test them. Click the controller, click LoadNPC, then the name of the NPC.  If all has gone well, your NPC should now respond to commands. Try saying "<name> come" or "<name> follow me"  in the local chat near the NPC to test them. If all is going well, the NPC will respond. If not, remove the NPC and try again.
 
+# Supported commands for NPCs
 
-# NPC supported commands 
+The NPCs respond to commands that you give to them through the local chat. 
 
-The NPCs support a number of commands.  You  give these commands through the public chat when the NPC is near you.  The syntax is: 
-
-   [npc-firstname] [command]
-
-For example, assuming our NPC is called Bob: 
+Assuming your NPC is named "Bob", you can say the following in the local chat:
 ```
   Bob come
   Bob leave
+  Bob stop
   Bob follow me
+  Bob fly with me
+  Bob say hi
   ...
   etc.
 ```
-You can have the NPCs execute these commands whenever they reach a waypoint by creating a "scenario" notecard.   A scenario is just a list of commands, one per line, that is executed by the all NPCs whenever they reach that waypoint (Read the next section for waypoints).
- 
+You can put these commands in notecards in order to create complex scenarios. 
+
 For more complex behavior, the following control commands are supported in  notecards:  if, if-not, jump
  
-Example of a notecard:
+Example of a scenario notecard:
 ```
   if name-is Bob Alice
    say hi
@@ -61,12 +79,9 @@ Example of a notecard:
   say ... and i 'm now leaving
   leave
 ```
+You can add these commands to a notecard named "test.scr" and then ask the Bob to execute them by saying "Bob test" in the local chat.
 
-This example shows how to use if blocks, the jump command and how to create labels like @outofhere
-
-As you see, in notecards, the name of the NPC is omitted. It is replaced with the name of the NPC automatically, for example when Bob runs this notecards "say hi" becomes "Bob say hi". 
-
-In order to add a scenario to a waypoint, create a notecard with the name format:  "_"+[waypoint-number]+".scr" and drop it in the controller object.
+In order to add a scenario to a waypoint, create a notecard with the name format:  "_<waypoint-number>.scr" and drop it in the controller object.
  
 For example the "_10.scr" notecard will be executed at waypoint #10, "_11.scr" at waypoint #11 and so on. Waypoints start at #0. You can find the waypoint number on top of the pegs when editing waypoints (Read below).
 
