@@ -37,6 +37,8 @@ The controller contains a number of items:
 
 The controller requires OSSL functions to work. Apart from the osNpc*() functions you should also enable: osListenRegex(), osGetNotecard(), osMessageAttachments(), osSetSpeed().   The controller uses channel 68 for all its functions. 
 
+To start using the controller, rez the OSWNpcController object somewhere in your region. 
+
 Before you create a new NPC, you need to add their name to the __npc_names notecard. Edit the __npc_names notecard, and add the *first* name of your NPC, in a new line by itself. The last name of your NPCs will always be (NPC). 
 
 *After making changes in the notecard,  click on the controller and select "ReConfig"*.
