@@ -27,9 +27,9 @@ The controller contains a number of items:
 * The __waypoints notecard. This contains a list of points in your region. The NPCs can walk from one point to the other, if they are connected (via the __links notecard) . *You do not need to edit this by hand. There is an HUD for editing the map*
 * The __links notecard. This contains a list of pairs of connected points. I.e. if you want to link point 1 to point 2, there will be a line "1,2" in the notecard. *You do not need to edit this by hand. There is an HUD for editing the map*
 * The __config notecard. This contains configuration ootions.
-* Command notecards. You can put a list of commands that the NPC will execute in a notecard named <command-name>.scr. You can then order your NPCs to execute them in the chat. E.g. if you create a notecard "dance.scr", you can say "Bob dance" to execute it.
+* Command notecards. You can put a list of commands that the NPC will execute in a notecard named [command-name].scr. You can then order your NPCs to execute them in the chat. E.g. if you create a notecard "dance.scr", you can say "Bob dance" to execute it.
 * Waypoint notecards. Notecards named _1.scr , _2.scr etc are executed automatically when the NPCs reach the waypoint number 1, number 2 etc. 
-* The appearance notecards are stored as APP_<firstname> for each NPC. You can also have multiple appearances per NPC (see below). 
+* The appearance notecards are stored as APP_[firstname] for each NPC. You can also have multiple appearances per NPC (see below). 
 * The Waypoint HUD is used to edit the map and create/update the __waypoints and __links notecards
 
 
@@ -43,7 +43,7 @@ Before you create a new NPC, you need to add their name to the __npc_names notec
 
 To create an NPC appearance notecard, dress yourself as you want the NPC to look, and  wear the "Listener" object on your RIGHT PEC. The Listener is an object that  listens to the local chat for commands and sends them to the NPC controller for processing. When you are happy with your appearance and certain you are wearing the listener, move within 20 meters near the controller,  click on the controller, select SaveNPC, and then NPC you wish to create.  You should see a message "Appearance saved to APP_xxxx" in a few seconds. This means your appearance has been saved in a notecard inside the controller. 
 
-You can now load your NPC to test them. Click the controller, click LoadNPC, then the name of the NPC.  If all has gone well, your NPC should now respond to commands. Try saying "<name> come" or "<name> follow me"  in the local chat near the NPC to test them. If all is going well, the NPC will respond. If not, remove the NPC and try again.
+You can now load your NPC to test them. Click the controller, click LoadNPC, then the name of the NPC.  If all has gone well, your NPC should now respond to commands. Try saying "[name] come" or "[name] follow me"  in the local chat near the NPC to test them. If all is going well, the NPC will respond. If not, remove the NPC and try again.
 
 # Supported commands for NPCs
 
@@ -81,7 +81,7 @@ Example of a scenario notecard:
 ```
 You can add these commands to a notecard named "test.scr" and then ask the Bob to execute them by saying "Bob test" in the local chat.
 
-In order to add a scenario to a waypoint, create a notecard with the name format:  "_<waypoint-number>.scr" and drop it in the controller object.
+In order to add a scenario to a waypoint, create a notecard with the name format:  "_[waypoint-number].scr" and drop it in the controller object.
  
 For example the "_10.scr" notecard will be executed at waypoint #10, "_11.scr" at waypoint #11 and so on. Waypoints start at #0. You can find the waypoint number on top of the pegs when editing waypoints (Read below).
 
