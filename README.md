@@ -81,22 +81,18 @@ Example of a scenario notecard:
   say ... and i 'm now leaving
   leave
 ```
-You can add these commands to a notecard named "test.scr" and then ask the Bob to execute them by saying "Bob test" in the local chat.
-
-In order to add a scenario to a waypoint, create a notecard with the name format:  "_[waypoint-number].scr" and drop it in the controller object.
- 
-For example the "_10.scr" notecard will be executed at waypoint #10, "_11.scr" at waypoint #11 and so on. Waypoints start at #0. You can find the waypoint number on top of the pegs when editing waypoints (Read below).
+You can add these commands to a notecard named "test.scr" inside the controller object, and then ask the Bob to execute them by saying "Bob test" in the local chat.
 
 
 # List of NPC commands
 
-These commands must be preceded by the name of the NPC. Here we assume our NPC is called "Bob"
+When giving commands through the local chat, commands must be preceded by the first name of the NPC. Here we assume our NPC is called "Bob"
 ```
-  Bob come         = "Come here ". Bob will come move close to you
+  Bob come           : "Come here ". Bob will  move close to you
 
-  Bob moveto 23      : walk towards  waypoint #23
+  Bob moveto 23      :  Walk towards  waypoint #23
 
-  Bob movetov <23,24,25>  :  walk towards point with coordinates <23,24,25> 
+  Bob movetov <23,24,25>  :  walk towards point with coordinates <23,24,25> (Note, no spaces between vector coordinates)
   
   Bob runtov <23,24,25>  :  run towards point with coordinates <23,24,25> 
 
@@ -109,47 +105,57 @@ These commands must be preceded by the name of the NPC. Here we assume our NPC i
   ** Note: never leave spaces in coordinate vectors, i.e. <23,24,25> NOT <23, 24, 25> **
 ```
 
-## Sit command
+## USE command
 
 The NPC can sit on objects. The way it works is as follows:
 ```
 Bob use chair         
 ```
-Bob will attempt to find a SCRIPTED object named "chair" (Object Name) near him and try to sit on it if its transparency (alpha) is less than 100%. Since by convention poseballs turn transparent when users sit on them, this ensures that Bob will not sit on an already-occupied poseball.
+Bob will attempt to find a SCRIPTED object named "chair" (You can change the Object Name from the properties box when editing it) near him and try to sit on it if its transparency (alpha) is less than 100%. Since, by convention, poseballs turn transparent when users sit on them, this ensures that Bob will not sit on an already-occupied poseball.
 
 ```
 Bob stand             : Bob will stand up if he is sitting
 ```
 ## Variables
-Variables can be used with IF commands for more complex scenarios. Variables are global and can be shared between notecards and NPCs. 
+Variables can be used with IF commands for more complex scenarios. Variables are global and shared between notecards and NPCs. 
 ```
 Bob setvar foo 13                : set variable foo to be "13". Only string variables are supported. Variables can be used with IF blocks
 Bob setvar foo                   :  set variable foo to the empty string. The empty string is the default value if a variable does not exist
 Bob say $foo        : Bob says "13"
+if var-is foo 13
+   say foo is thirteen
+end-if
+if var-is foo 
+   say foo is empty string or not set 
+end-if
+
+waitvar foo 13    : wait until the variable foo becomes 13
 ```
 
-## Flow control with IF commands
-There is support for multiple levels of IF blocks. blocks end with "end-if". There is no "else" command, but you can achieve the same effect with "jump" commands
+## IF commands
+There is support for multiple levels of IF blocks. Blocks must end with "end-if". There is no "else" command, but you can achieve the same effect with "jump" commands
 
 ```
 if name-is bob alice            : if the npc's name is Bob or alice
       say I am either Bob or Alice
+      if-not name-is Bob
+        say I must be Alice
+      end-if
 end-if                          : always end IF blocks with end-if.  You  can nest if blocks
 
 if-not name-is Bob              : Example of negative if
   say I am not Bob
 end-if
   
-
 if-prob 0.3                     : IF block will be executed with probabilty 0.3 (the if block will be executed 30% of the time)
-  say This will happen 30% of the times
+  say This will be heard 30% of the times
 end-if
 
 if var-is party 1               : Will execute the IF block if the variable party is "1"
   say We are having a party already!
 end-if
 
-if var-is party               : Will execute the IF block if the variable party is empty ("")
+if var-is party               : Will execute the IF block if the variable party is empty or not set
   say No party yet, let's start one!
   setvar party 1
 end-if
@@ -164,8 +170,9 @@ jump myLabel   :  like "jump" in LSL or "goto" in other languages. the label sho
 ```
 
 
-## Useful script commands
+## WAIT commands
 ```
+
 wait 200           : wait 200 seconds
 
 wait 200  300      : wait between 200 and 300 second before executing the next command
@@ -173,6 +180,7 @@ wait 200  300      : wait between 200 and 300 second before executing the next c
 waitvar foo 13     : wait until the variable foo gets the value 13
 
 waitvar foo        : wait until the variable foo is empty.
+
 ```
 
 
@@ -194,12 +202,6 @@ Bob shout Blah bleh
 Bob teleport Bar                            : Teleports bob to the waypoint named "Bar"
 Bob teleport <23,30,40>                     : Teleports to a point. REMEMBER to never leave spaces inside the vector string
 ```
-
-```
-Bob msgatt  attachment_command 12 13 14 15  
-```
-Uses osMessageAttachments to send the message "attachment_command" to attachments at attach points 12 13 14 15. 
-This can be useful for scripting NPC attachments. Read the OSSL docs of osMessageAttachments() for more. 
 
 ```
 Bob lookat me            : attempts to look at you 
@@ -238,12 +240,19 @@ Bob dress               : load the appearance from notecard "APP_bob" (The defau
 
 Bob dress  swimming     : load the appearance from notecard "APP_bob_swimming"
 ```
-You can have multiple appearance notecards per NPC, just rename their appearance notecard from "APP_bob" to "APP_bob_dressName" 
+You can have multiple appearance notecards for an NPC by renaming them. In this case the default notecard for Bob is stored as APP_bob and the 'swimming' dress is stored as APP_bob_swimming
+
+
+```
+Bob msgatt  attachment_command 12 13 14 15  
+```
+Uses osMessageAttachments to send the message "attachment_command" to attachments at attach points 12 13 14 15. 
+This can be useful for scripting NPC attachments. Read the OSSL docs of osMessageAttachments() for more. 
 
 
 ## Custom command notecards
 
-You can create your own commands with a notecard. To create a command notecard, enter the commands for the NPC to execute in a notecard, and save it into the controller's inventory with the name [command-name].scr
+You can extend the list of commands with  notecards. To create a command notecard, enter the commands for the NPC to execute in a notecard, and save it into the controller's inventory with the name [command-name].scr
 
 E.g. a dance command notecard would be named "dance.scr" and contain the following
 ```
@@ -258,24 +267,23 @@ You can then say "Bob dance" to have bob execute the notecard
 
 # Creating waypoints
 
-You can use the controller to create waypoints and links between them in your region. 
+You can use the controller to create waypoints and links between them in your region. Bob can then walk between the connected points when you say 'Bob leave'
 
-Each waypoint has a number (starting from 0) and optionally a name. Waypoints can be connected to other waypoints, thus creating a map (graph) between them. The NPC can then wander between the waypoints (Use "Bob leave" to make them start wandering), and they can also go from waypoint A to waypoint B (if there are appropriate links between the two).
+Each waypoint has a number (starting from 0) and optionally a name. Waypoints can be connected to other waypoints, thus creating a map (graph) between them. Bob can then wander between the waypoints (Say "Bob leave" to start walking), and you can also ask him to find his way from point A to point B (say Bob goto [destination]).
 
-To create a map, wear the WaypointEditor HUD.  If you already have a map, click RezPegs from the HUD menu. This will rez  a peg in each waypoint you have already created.  If you are starting with an empty map, you do not need to do this!
+To create a map, first wear the WaypointEditor HUD.  If you already have created a map before, click RezPegs from the HUD menu. This will rez  a peg in each waypoint you have already created.  If you are starting with an empty map, you do not need to do this.
 
 To add a waypoint, move your avatar to the desired position, and select "AddPeg" from the HUD menu. A peg should appear in front of you. To create a second waypoint, move to another position, and repeat. 
 
-To link the two waypoints X and Y, click on the first one (X), then click on the second one (Y). The pop up dialog should say "Current peg: Y, previous: X". To link them, select "LinkPegs" from the popup dialog. To unlink two waypoints, again, click on the first one, then click on the second one and select "UnlinkPegs" from the popup. 
-
+To link the two waypoints X and Y, click on the first one (X), then click on the second one (Y). The pop up dialog should say "Current peg: Y, previous: X". To link them, select "LinkPegs" from the popup dialog. To unlink two waypoints, again, click on the first one, then click on the second one and select "UnlinkPegs" from the popup. Be careful to disregard all other dialogs that have popped up.
 
 You can give a name to waypoints. Click the peg, select "SetName", and enter the name (E.g. "Bar"). You can use this name to give commands to your NPCs later (e.g. "Bob go to bar").
 
-You can move the waypoints to correct their positions. *Important: After you move pegs to new positions click "ScanPegs" from the editor HUD. If you don't do this your changes will be lost.
+You can move the waypoints around to correct their positions. Important: After you move pegs to new positions click "ScanPegs" from the editor HUD. If you don't do this your changes will be lost.
 
-To save the changes you have made to the map, click the editor HUD and select "SaveCards". This will update the __waypoints and the __links notecards to match your new map.  To test that all went well, clear the pegs and rez them again. 
+After you have created/edited your waypoints, click the WaypointEditor HUD and select "SaveCards". This will update/create the __waypoints and the __links notecards inside the controller to match your new map.  To test that all went well, clear the pegs and rez them again. 
 
-Note! Removing waypoints is not supported, as it would break the numbering and would mess up the notecard naming scheme. Although deleting is not supported, you can unlink a peg from all other pegs, in which case the NPCs will never go there when wandering. If you want to start over with an empty map, edit the __waypoints and __links notecards, remove all their contents, and then select "Reconflg" from the controller. 
+Note! Removing waypoints is not supported, as it would break the numbering and would mess up the notecard naming scheme. Although deleting is not supported, you can unlink a waypoint from all other waypoints, in which case the NPCs will never go there when wandering. If you want to start over with an empty map, edit the __waypoints and __links notecards, remove all their contents, and then select "Reconflg" from the controller. 
 
 
 ## Configuration
@@ -283,9 +291,10 @@ Configurable options are added in the __config  notecard:
 ```
 AutoLoadOnReset=0
 ```
-Change AutoLoadOnReset=0 to AutoLoadOnReset=1 to make the controller rez the NPCs on region restart or script reset. Please note that autoloading may not always work well. 
+Change AutoLoadOnReset=0 to AutoLoadOnReset=1 to make the controller rez the NPCs automatically on region restart or script reset. Please note that autoloading NPCs may not always work. 
 
-The notecard __initcommands contains initial commands to give to the NPCs. These commands are executed automatically after auto-rezzing the NPCs when the controller is configured to rez on reset, or manually by clicking "InitCmds" from the controller menu.  You can use  __initcommands  to add commands that set your NPCs in motion. Typically you would tell them to "leave" so that they start  wandering. An example of __initcommands is : 
+## Initialization commands
+The notecard __initcommands contains initial commands to give to the NPCs. These commands are executed automatically after rezzing the NPCs when AutoLoadOnReset is on, or manually by clicking "InitCmds" from the controller menu.  You can thus use  the __initcommands  to add commands that set your NPCs in motion. Typically you would tell them to "leave" so that they start  walking. An example of __initcommands is : 
 ```
 Bob say I am rezzed!
 Bob teleport <64,64,22>
@@ -294,9 +303,10 @@ Bob leave
 Alice leave
 ```
 
-## Extensions
 
-You can create your own NPC commands with extension scripts.  Extensions are scripts that are placed inside the controller object.  Commands that are not processed by the NPC controller are sent via link_message to the extension scripts for processing. The extensions can also use link_message (with number parameter >=0) to send back commands to the NPC controller. The default NPC controller object already contains an extension that implements the "help" command (the "..Extension" script). The script in it shows how extensions parse the data sent from the controller (through link_message)  and how they can respond.
+## Extension scripts
+
+You can create your own NPC commands with extension scripts.  Extensions are scripts that are placed inside the controller object.  Commands given to NPCs that are not processed by the NPC controller are sent via link_message to the extension scripts for processing. The extensions can also use link_message (with number parameter >=0) to send back commands to the NPC controller. The default NPC controller object already contains an extension that implements the "help" command (the "..Extension" script). The script in it shows how extensions parse the data sent from the controller (through link_message)  and how they can respond back.
 
 The string sent through link_message (or through channel 68) is of the format:
 ```
@@ -306,6 +316,7 @@ i.e. commands  that you would normally give to the NPC through the chat are pref
 
 The 'key'  parameter of link_message is the uuid of the NPC. Look into the ..Extension script for more.
 
+
 ## Sending commands from other objects
 
 You can send commands directly to the NPC controller from any object. The NPC controller listens on channel 68. Remember to send the command using llRegionSay region-wide, as your object will probably be far away from the controller:
@@ -313,16 +324,16 @@ You can send commands directly to the NPC controller from any object. The NPC co
 llRegionSay(68, "! 0000 UUUU Bob say hello");
 ```
 
-Another way to interact with the controller is the SETVAR command. You can set or change a variable in the controller by 
-sending SETVAR to channel 68:
-
+Another way to interact with the controller is by setting/updating variables via the SETVAR command. You can set or change a variable in the controller by sending SETVAR to channel 68:
 ```
 llRegionSay(68,  "SETVAR foo 1");
 ```
-(Note we use  SETVAR in capitals. This will set the variable "foo" to "1" . You can then use this variable in an notecard. In this example, the NPC waits for the variable "foo" before dancing:
+(Note we use  SETVAR in capitals. This will set the variable "foo" to "1"). 
+
+You can use this variable in an notecard. In this example notecard, the NPC will waits for the variable "foo" to become '1' before dancing:
 ```
 @start
-say Waiting for variable ...
+say Waiting for variable foo to become 1...
 waitvar foo 1
 say Variable foo is now 1! Let's do something interesting!
 anim dance1
@@ -333,20 +344,13 @@ jump start
 ```
 
 
-## Extras
+## Extra utilities
 
-The controller checks the number of visitors in your region every 2 minutes. If there are no visitors in the region it will stop executing commands thus avoiding unnecessary load to the region. 
-
-In addition, the controller keeps track of the  latest visitors, giving you a log of the latest visitors:
-```
-Bob seen all    : will print everyone who visited
-Bob seen foo    : will print information about foo
-```
-
+The controller checks the number of visitors in your region every 2 minutes. If there are no visitors in the region it will stop executing commands to avoiding unnecessary load to the region. 
 
 
 # Technical Notes
 
-The controller runs through a single timer, that updates the states of the NPCs every 5 seconds. This allows it to be extremely lightweight, as it does not block processing, but also causes small delays between commands. 
+The controller runs a single timer, that updates the states of all the NPCs every 5 seconds. This allows it to be extremely lightweight, as it does not block any script processing, but it may also cause delays when executing commands. 
 
 
