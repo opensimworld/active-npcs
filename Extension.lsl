@@ -45,10 +45,9 @@ default
             string cmd2 = llList2String(tokens, 5);
             
            
-            if (cmd1=="aodisable" || cmd1 == "aoenable")
-                osMessageAttachments(uNPC, cmd1, [ATTACH_RIGHT_PEC], 0);
-            else if (cmd1=="hide" || cmd1 == "show")
+            if (cmd1=="hide" || cmd1 == "show")
             {
+                // This can be used to hide-show appropriately-scripted attachments
                 osMessageAttachments(uNPC, cmd2+"-"+cmd1, [ATTACH_LHAND, ATTACH_RHAND], 0);
             }
             else if (cmd1 == "help")
