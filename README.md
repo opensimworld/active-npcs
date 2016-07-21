@@ -71,7 +71,7 @@ Example of a scenario notecard:
   if name-is Bob Alice
    say hi
    say I am either Bob or Alice
-   jump @outofhere
+   jump outofhere
   end-if
   say i am not bob or alice
   @outofhere
