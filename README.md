@@ -115,7 +115,7 @@ The NPC can sit on objects. The way it works is as follows:
 ```
 Bob use chair         
 ```
-Bob will attempt to find an object named "chair" (Object Name) near him and try to sit on it if its transparency (alpha) is less than 100%. Since by convention poseballs turn transparent when users sit on them, this ensures that Bob will not sit on an already-occupied poseball.
+Bob will attempt to find a SCRIPTED object named "chair" (Object Name) near him and try to sit on it if its transparency (alpha) is less than 100%. Since by convention poseballs turn transparent when users sit on them, this ensures that Bob will not sit on an already-occupied poseball.
 
 ```
 Bob stand             : Bob will stand up if he is sitting
