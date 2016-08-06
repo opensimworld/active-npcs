@@ -15,7 +15,23 @@ Please send questions and comments here: http://opensimworld.com/forum/viewtopic
 
 
 
-# Contents
+
+
+# Installation
+
+The controller requires OSSL functions to work. Apart from the osNpc*() functions you should also enable: osListenRegex(), osGetNotecard(), osMessageAttachments(), osSetSpeed().   The controller uses channel 68 for all its functions. 
+
+To start using the controller, rez the OSWNpcController object somewhere in your region. 
+
+Before you create a new NPC, you need to add their name to the __npc_names notecard. Edit the __npc_names notecard, and add the *first* name of your NPC, in a new line by itself. The last name of your NPCs will always be (NPC). 
+
+*After making changes in the notecard,  click on the controller and select "ReConfig"*.
+
+To create an NPC appearance notecard, dress yourself as you want the NPC to look, and  wear the "Listener" object on your RIGHT PEC. The Listener is an object that  listens to the local chat for commands and sends them to the NPC controller for processing. When you are happy with your appearance and certain you are wearing the listener, move within 20 meters near the controller,  click on the controller, select SaveNPC, and then NPC you wish to create.  You should see a message "Appearance saved to APP_xxxx" in a few seconds. This means your appearance has been saved in a notecard inside the controller. 
+
+You can now load your NPC to test them. Click the controller, click LoadNPC, then the name of the NPC.  If all has gone well, your NPC should now respond to commands. Try saying "[name] come" or "[name] follow me"  in the local chat near the NPC to test them. If all is going well, the NPC will respond. If not, remove the NPC and try again.
+
+# Controller object Contents
 
 The controller contains a number of items:
 
@@ -32,20 +48,6 @@ The controller contains a number of items:
 * The appearance notecards are stored as APP_[firstname] for each NPC. You can also have multiple appearances per NPC (see below). 
 * The Waypoint HUD is used to edit the map and create/update the __waypoints and __links notecards
 
-
-# Installation
-
-The controller requires OSSL functions to work. Apart from the osNpc*() functions you should also enable: osListenRegex(), osGetNotecard(), osMessageAttachments(), osSetSpeed().   The controller uses channel 68 for all its functions. 
-
-To start using the controller, rez the OSWNpcController object somewhere in your region. 
-
-Before you create a new NPC, you need to add their name to the __npc_names notecard. Edit the __npc_names notecard, and add the *first* name of your NPC, in a new line by itself. The last name of your NPCs will always be (NPC). 
-
-*After making changes in the notecard,  click on the controller and select "ReConfig"*.
-
-To create an NPC appearance notecard, dress yourself as you want the NPC to look, and  wear the "Listener" object on your RIGHT PEC. The Listener is an object that  listens to the local chat for commands and sends them to the NPC controller for processing. When you are happy with your appearance and certain you are wearing the listener, move within 20 meters near the controller,  click on the controller, select SaveNPC, and then NPC you wish to create.  You should see a message "Appearance saved to APP_xxxx" in a few seconds. This means your appearance has been saved in a notecard inside the controller. 
-
-You can now load your NPC to test them. Click the controller, click LoadNPC, then the name of the NPC.  If all has gone well, your NPC should now respond to commands. Try saying "[name] come" or "[name] follow me"  in the local chat near the NPC to test them. If all is going well, the NPC will respond. If not, remove the NPC and try again.
 
 # Supported commands for NPCs
 
@@ -216,6 +218,8 @@ Bob sound 1c8a3af2-6e5a-4807-a7a3-a42e5744217c 1.0   : The NPC will play the sou
 
 Bob light               :  turn on/off a light the NPCs have on them
 
+Bob give Apple      : Give the object "Apple" from the controller's inventory to the user. For security, only objects can be given.
+
 Bob follow me
 
 Bob follow  Alice       : follow the avatar whose first name is 'Alice'
@@ -263,6 +267,29 @@ say oops, I am  tired...
 stop
 ```
 You can then say "Bob dance" to have bob execute the notecard
+
+# Interactive menus
+
+An interactive prompt allows the npcs to have complex interactions with users. The following notecard asks the user if they want apple or an orange and gives an object to them:
+```
+say Welcome to the shop!
+@prompt
+  prompt Do you want an [apple] or an [orange]?
+  say I didn't catch that. Starting over.
+  jump prompt
+@apple
+  say Here is an apple
+  give Apple
+  jump end
+@orange
+  say Here is your orange
+  give Orange
+  jump end
+@end
+say Goodbye
+```
+
+The prompt command prints out a string, and then waits for the user to type one of the words in square brackets (case insensitive). If a user types one of the words, it jumps to the label with the same name (e.g. if user types "Apple" , it jumps to the label @apple). If the user types something else, the script continues with the next line after the prompt command (here it complains to the user and starts over).
 
 
 # Creating waypoints
