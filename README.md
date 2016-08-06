@@ -21,13 +21,13 @@ Please send questions and comments here: http://opensimworld.com/forum/viewtopic
 
 The controller requires OSSL functions to work. Apart from the osNpc*() functions you should also enable: osListenRegex(), osGetNotecard(), osMessageAttachments(), osSetSpeed().   The controller uses channel 68 for all its functions. 
 
-To start using the controller, rez the OSWNpcController object somewhere in your region. 
+To start using the controller, rez the OSW NPC Controller object somewhere in your region. 
 
 Before you create a new NPC, you need to add their name to the __npc_names notecard. Edit the __npc_names notecard, and add the *first* name of your NPC, in a new line by itself. The last name of your NPCs will always be (NPC). 
 
 *After making changes in the notecard,  click on the controller and select "ReConfig"*.
 
-To create an NPC appearance notecard, dress yourself as you want the NPC to look, and  wear the "Listener" object on your RIGHT PEC. The Listener is an object that  listens to the local chat for commands and sends them to the NPC controller for processing. When you are happy with your appearance and certain you are wearing the listener, move within 20 meters near the controller,  click on the controller, select SaveNPC, and then NPC you wish to create.  You should see a message "Appearance saved to APP_xxxx" in a few seconds. This means your appearance has been saved in a notecard inside the controller. 
+To create an NPC appearance notecard, dress yourself as you want the NPC to look, and  wear the "OSW NPC Listener" object on your RIGHT PEC. The Listener is an object that  listens  for commands from the local chat and sends them to the NPC Controller for processing. When you are happy with your appearance, make sure you are wearing the Listener, move within 20 meters near the controller,  click on the controller, select SaveNPC, and then NPC you wish to create.  You should see a message "Appearance saved to APP_xxxx" in a few seconds. This means your appearance has been saved in a notecard inside the controller. 
 
 You can now load your NPC to test them. Click the controller, click LoadNPC, then the name of the NPC.  If all has gone well, your NPC should now respond to commands. Try saying "[name] come" or "[name] follow me"  in the local chat near the NPC to test them. If all is going well, the NPC will respond. If not, remove the NPC and try again.
 
