@@ -245,7 +245,8 @@ doInitCmds()
         string line = llStringTrim(osGetNotecardLine(notecard, i), STRING_TRIM);
         if (llStringLength(line)>0 && line != "")
         {
-            line = "! 0000 UUUU " + line;
+            list l = llParseString2List(line, [" "], []);
+            line = "! "+(string)NULL_KEY+" "+llList2String(l,0)+" "+ line;
             llOwnerSay("InitCmd="+line);
             ProcessNPCCommand(line);
         }
@@ -533,12 +534,11 @@ integer ProcessNPCCommand(string inputString)
     list tokens = llParseString2List(inputString, [" "], []);
     // first token should be just "!"
 
+    //llOwnerSay("<<"  + inputString);
     key sendUid = llList2Key(tokens,1);
     string npcName = llToLower(llList2String(tokens,2));
     string name2 = llToLower(llList2String(tokens,3));
-    if (sendUid ==  NULL_KEY)
-        npcName = name2;
-
+    //if (npcName != name2)     npcName = name2;
 
     integer idx = GetNPCIndex(npcName);
     if (idx <0)
@@ -567,9 +567,22 @@ integer ProcessNPCCommand(string inputString)
    
     string cmd1= llList2String(tokens,4);
     string cmd2= llList2String(tokens,5);
-    
     list userData;
-    if (cmd1 == "stop")
+    
+    if (npcName != name2 ) // Can happen if prompt
+    {
+            if (llList2String(aviStatus, idx) == "prompt")
+            {
+                aviStatus =  []+llListReplaceList(aviStatus, [""], idx, idx); // No more prompt
+                if (llSubStringIndex(llList2String(aviPrompts, idx) , "["+llToLower(name2)+"]")>0) // label existed in prompt
+                {
+                    aviTarget =  []+llListReplaceList(aviTarget, [sendUid], idx, idx);
+                    ScriptJump(idx, name2, 1);
+                }
+                return 1;
+            }
+    }    
+    else if (cmd1 == "stop")
     {
         doStopNpc(idx, uNPC);
     }
@@ -740,7 +753,7 @@ integer ProcessNPCCommand(string inputString)
         aviStatus =  []+llListReplaceList(aviStatus, ["prompt"], idx, idx);
         osNpcSay(uNPC, prompt);
         aviPrompts = []+llListReplaceList(aviPrompts, [llToLower(inputString)], idx, idx);
-        aviTarget =  []+llListReplaceList(aviStatus, [NULL_KEY], idx, idx);
+        aviTarget =  []+llListReplaceList(aviTarget, [NULL_KEY], idx, idx);
         osMessageAttachments(uNPC, "prompt", [ATTACH_RIGHT_PEC], 0);
     }
     else if (cmd1 == "jump")
@@ -1078,16 +1091,6 @@ integer ProcessNPCCommand(string inputString)
     }
     else if (llGetSubString(cmd1,0,0) == "@")
         return 0;
-    else if (llList2String(aviStatus, idx) == "prompt")
-    {
-            aviStatus =  []+llListReplaceList(aviStatus, [""], idx, idx); // No more prompt
-            if (llSubStringIndex(llList2String(aviPrompts, idx) , "["+llToLower(name2)+"]")>0) // label existed in prompt
-            {
-                aviTarget =  []+llListReplaceList(aviStatus, [sendUid], idx, idx);
-                ScriptJump(idx, name2, 1);
-            }
-            return 1;
-    }
     else if (cmd1 != "")
     {
        
@@ -1162,7 +1165,7 @@ integer MoveToNewTarget(integer idx)
 integer ExecScriptLine(string aviName, string scriptline)
 {
     // The token list expects the name of the avi twice. we use 0000 as the sending-uid identifier
-    string command = "! 0000 " + aviName+" "+ aviName + " " + scriptline;
+    string command = "! "+ (string)NULL_KEY +" " + aviName +" "+ aviName +" "+ scriptline;
    // list tokens = llParseString2List(command, [" "], [] );
     return ProcessNPCCommand(command);
 }
@@ -1427,7 +1430,7 @@ default
                             else
                             {
                                 // Substitute sender with the prompt target, if any
-                                string cmd = "! "+ llList2String(aviTarget, g) +" "+ llList2String(aviNames, g) +" "+ llList2String(aviNames, g) + " "+ scriptline; 
+                                string cmd = "! "+ (string)llList2Key(aviTarget, g) +" "+ llList2String(aviNames, g) +" "+ llList2String(aviNames, g) + " "+ scriptline; 
                                 stopNow = ProcessNPCCommand(cmd);
                                 // Advance script pointer 
                                 scriptIndex = llList2Integer(aviScriptIndex, g); 
