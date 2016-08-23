@@ -20,8 +20,10 @@ To start using the controller:
 - Wear the OSW NPC Listener object (it should attach automatically to your Right Pec!)
 - Edit the __npc_names notecard, and replace its contents with the FIRST NAME of your first NPC e.g. Bob
 - Touch the controller -> select ReConfig
-- Touch the controller, Select SaveNPC -> Bob.
+- Touch the controller, Select SaveNPC -> Bob (You should see a message "Saved appearance xxx-xxx -> APP_bob"
 - Touch the controller -> LoadNPC -> Bob
+
+
 Your npc should now be responding to commands , e.g. "Bob come"
 
 To add more NPCs,  add their names to the __npc_names notecard. Add  the *first* name of each NPC, in a line by itself. The last name of your npcs will be "(NPC)". After editing the notecard,  select "ReConfig" from the controller menu.
