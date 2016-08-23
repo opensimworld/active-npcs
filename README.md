@@ -1,14 +1,16 @@
-# Active NPCs
+# Active NPCs Controller
 
-This is a full-featured controller for creating interactive NPCs, scripting them (through notecards) and creating waypoints of your region so that the NPCs can roam around. The controller is lightweight (a single script manages all the NPCs) and the NPCs are interactive (i.e. you can give them commands through the local chat).
+This is a full-featured controller for creating interactive NPCs , scripting them (through notecards) and creating waypoints of your region so that the NPCs can walk around your region. The controller is extremely lightweight (a single script manages all the NPCs) and the NPCs are interactive (i.e. you can give them commands through the local chat).
 
-You can get the latest OSWNPC package from the OpenSimWorld region in Metropolis, where you can also see them in action:
+You can get the latest  package from the OpenSimWorld region in Metropolis, where you can also see them in action:
 
 http://opensimworld.com/hop/74730-OpenSimWorld
 
-(move down near the bunker to find the package)
+Hypergrid: hypergrid.org:8002:OpenSimWorld
 
-Please visit https://github.com/opensimworld/active-npcs/edit/master/README.md for an up-to-date version of this documentation.
+(You have to  move down near the bunker to find the package)
+
+Visit https://github.com/opensimworld/active-npcs/edit/master/README.md for an up-to-date version of this documentation.
 
 
 # Quickstart
@@ -22,7 +24,6 @@ To start using the controller:
 - Touch the controller -> select ReConfig
 - Touch the controller, Select SaveNPC -> Bob (You should see a message "Saved appearance xxx-xxx -> APP_bob"
 - Touch the controller -> LoadNPC -> Bob
-
 
 Your npc should now be responding to commands , e.g. "Bob come"
 
@@ -360,67 +361,69 @@ Change AutoLoadOnReset=0 to AutoLoadOnReset=1 to make the controller rez the NPC
 
 
 ## Initialization commands
-The notecard __initcommands contains initial commands to give to the NPCs. These commands are executed automatically after rezzing the NPCs when AutoLoadOnReset is on, or manually by clicking "InitCmds" from the controller menu.  You can thus use  the __initcommands  to add commands that set your NPCs in motion. Typically you would tell them to "leave" so that they start  walking. An example of __initcommands is : 
+The notecard __initcommands contains initial commands to give to the NPCs. If AutoLoadOnReset is enabled, the notecard contents are executed automatically after loading. You can also manually execute the notecard by clicking "InitCmds" from the controller menu.  You can use  the __initcommands  to add any command that sets your NPCs in motion. Typically you would tell them to "leave" so that they start  walking between waypoints. An example of __initcommands is : 
+
 ```
 Bob say I am rezzed!
 Bob teleport <64,64,22>
 Alice  teleport <128,64,22>
 Bob leave
-Alice leave
+Alice leave  : Start walking!
 ```
 
 
 ## Extension scripts
 
-You can create your own NPC commands with extension scripts.  Extensions are scripts that are placed inside the controller object.  Commands given to NPCs that are not processed by the NPC controller are sent via link_message to the extension scripts for processing. The extensions can also use link_message (with number parameter >=0) to send back commands to the NPC controller. The default NPC controller object already contains an extension that implements the "help" command (the "..Extension" script). The script in it shows how extensions parse the data sent from the controller (through link_message)  and how they can respond back.
+You can extend the functionality of the controller with extension scripts.  Extensions are LSL scripts that you create and add  inside the controller object.  If a command given to an NPCs is not understood by the NPC controller, the NPC controller will send a  link_message to the extension scripts to process it. The extensions can also use link_message to send back commands to the NPC controller (the  "number" parameter must be greater than 0) . The OSW NPC Controller object already contains an extension that implements the "help" command (look at the "..Extension" script). The script in it shows how extensions parse the data sent from the controller (sent through link_message)  and how they can respond back.
 
-The string sent through link_message (or through channel 68) is of the format:
+The number parameter of the link_message is -1 if it comes from the controller script. The key parameter of the link_message is the UUID of the NPC. The string parameter of the link_message (or through channel 68) is of the format:
 ```
-! 0000 UUUU Bob help
+! [uuid]  Bob Bob help
 ```
-i.e. commands  that you would normally give to the NPC through the chat are prefixed with "! 0000 UUUU "  and sent to channel 68. For commands such as "Bob follow me" which require knowing which avatar sent the command, "0000"  must be replaced with the uuid if the avatar giving the command. 
+Where:
+- [uuid] is the UUID of the user who gave the command
+- Bob is the name of the NPC. The name is repeated once again.
+- What follows is the rest of the command that the NPC heard (e.g. "help")
 
-The 'key'  parameter of link_message is the uuid of the NPC. Look into the ..Extension script for more.
-
+You can easily split the string with llParseString2List. Look into the ..Extension script for an example. 
 
 ## Sending commands from other objects
 
-You can send commands directly to the NPC controller from any object. The NPC controller listens on channel 68. Remember to send the command using llRegionSay region-wide, as your object will probably be far away from the controller:
+You can send commands directly to the NPC controller from any object. The NPC controller listens on channel 68. You have to remember to send the command using llRegionSay region-wide, so that the controller can hear it.
+The syntax is the same as the one used in link_message:
 ```
-llRegionSay(68, "! 0000 UUUU Bob say hello");
+llRegionSay(68, "! 0000-0000-0000-0000  Bob Bob say hello");
 ```
+The UUID can be zero, and the name of the NPC must be repeated twice, as shown above
 
-Another way to interact with the controller is by setting/updating variables via the SETVAR command. You can set or change a variable in the controller by sending SETVAR to channel 68:
+## Setting controller variables from other objects
+
+Another way to interact with the controller is by setting variables from other objects by sending SETVAR [variable name] [value] from other objects to channel 68. This is the syntax:
 ```
 llRegionSay(68,  "SETVAR foo 1");
 ```
-(Note we use  SETVAR in capitals. This will set the variable "foo" to "1"). 
+(SETVAR must be in capitals. This example will set the variable "foo" to "1"). 
 
-You can use this variable in an notecard. In this example notecard, the NPC will waits for the variable "foo" to become '1' before dancing:
+The variables can be used normally in notecards. In this example notecard, the NPC will waits for the variable "foo" to become '1' before starting to dance:
 ```
 @start
 say Waiting for variable foo to become 1...
 waitvar foo 1
-say Variable foo is now 1! Let's do something interesting!
+say Variable foo is now 1! Let's dance!
 anim dance1
-wait 20
+wait 10
 stop
-setvar foo 0
+setvar foo 0        : Reset var foo to 0 before waiting again
 jump start
 ```
-
-
-## Extra utilities
-
-The controller checks the number of visitors in your region every 2 minutes. If there are no visitors in the region it will stop executing commands to avoiding unnecessary load to the region. 
-
 
 # Technical Notes
 
 The controller runs a single timer, that updates the states of all the NPCs every 5 seconds. This allows it to be extremely lightweight, as it does not block any script processing, but it may also cause delays when executing commands. 
 
+The controller checks the number of visitors in your region every 2 minutes. If there are no visitors in the region for 2 minutes, it will stop executing commands to avoid creating unnecessary load to the region. 
 
 # Bugs 
 
-The controller was tested with version 0.8.2.1 . There may be multiple issues with other versions. Please add an issue, or get in touch with Satyr Aeon @ hypergrid.org:8002 .
+The controller was tested with version 0.8.2.1 . There may be multiple issues with other versions. Please add an issue, or get in touch with Satyr Aeon @ hypergrid.org:8002
 
