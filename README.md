@@ -100,30 +100,30 @@ When giving commands through the local chat, commands must be preceded by the fi
   
   Bob runtovr <23,24,25>  <33,34,25>  : same as above, but run
 
-  ** Note: never leave spaces in coordinate vectors, i.e. <23,24,25> NOT <23, 24, 25> **
+'''
+* * Note: never leave spaces in coordinate vectors, i.e. <23,24,25> NOT <23, 24, 25> **
 
-
+'''
 Bob say hi                            : Says "hi" on public channel 
-Bob saych 90 blablah                  : say "blablah" on channel 90
-Bob shout Blah bleh
-Bob teleport Bar                            : Teleports bob to the waypoint named "Bar"
-Bob teleport <23,30,40>                     : Teleports to a point. REMEMBER to never leave spaces inside the vector string
-```
 
-```
+Bob saych 90 blablah                  : say "blablah" on channel 90
+
+Bob shout Blah bleh
+
+Bob teleport <23,30,40>                     : Teleports to a point. REMEMBER: no spaces inside the vector brackets
+
 Bob lookat me            : attempts to look at you 
 
 Bob lookat <x,y,z>       : look towards point x,y,z
 
-Bob lookat Bar           : look towards the waypoint named "Bar"
 
 Bob anim dance           : play animation "dance" . the animation must be in the inventory of the controller object
 
-Bob sound 1c8a3af2-6e5a-4807-a7a3-a42e5744217c 1.0   : The NPC will play the sound with the given UUID  at the volume specified by the second parameter (1.0 is max volume)
+Bob sound 1c8a3af2-6e5a-4807-a7a3-a42e5744217c 1.0   : The NPC will trigger the sound with the given UUID  at the volume specified by the second parameter (1.0 is max volume)
 
 Bob light               :  turn on/off a light the NPCs have on them
 
-Bob give Apple      : Give the object "Apple" from the controller's inventory to the user. For security, only objects can be given.
+Bob give Apple      : Give the object "Apple" from the controller's inventory to the user. For security, only Objects can be given.
 
 Bob follow me
 
@@ -134,40 +134,80 @@ Bob fly with me
 Bob fly with alice      : fly with another user
 
 Bob stop                : Stops his animation and his movement, and stops following you
+```
 
-Bob leave               : Start wandering  between waypoints
+### Waypoint and Pathfinding commands
+You need to have set up the map of your region for these commands. That is described elsewhere. The NPC can automatically try to find how to walk from waypoint A to  B. Because this is computationally intensive, only paths with less than 15 connections between them are supported. 
+
+```
+Bob leave               : Start walking randomly between connected waypoints
+
+Bob teleport Bar        : Teleports bob to the waypoint named "Bar"
+
+Bob lookat Bar           : look towards the waypoint named "Bar"
+
+Bob moveto  1         : Walk to waypoint #1
+
+Bob nearest           : Tell me which is the nearest waypoint
 
 Bob setpath 0:1:3:5:1:0            : Walk through the given waypoints, i.e. walk to waypoint 0 , then to 1, then to 3, then to 5 etc. 
 
+Bob goto 13     : Will walk between connected waypoints to waypoint #13 
+
+Bob go to Bar   :  Will walk between connected waypoints to the waypoint named "Bar"
+
+Bob go to       : without  a destination, Bob will print the names of waypoints he knows
+
+```
+
+### Batch command Notecards 
+Multiple commands can be appended to a notecard, and then the NPC can execute them.
+
+```
 Bob run-notecard my_script.scr     : Execute the contents of the notecard my_script.scr (the notecard must be in the controller inventory
 
-Bob batch say hi ; wait 10; say bye     : Executes multiple commands one after the other. Commands are separated by ";"
+Bob my_script       : Simpler syntax. Same as run-notecard: Starts executing the notecard "my_script.scr" 
 
-Bob stop-script         : stop executing the notecard script
+Bob batch say hi ; wait 10; say bye     : Executes multiple commands one after the other. Commands are separated by ";" The commands will be executed as if they were in a notecard
 
-Bob dress               : load the appearance from notecard "APP_bob" (The default appearance notecard)
+Bob stop-script     : Stop executing the notecard script
 
-Bob dress  swimming     : load the appearance from notecard "APP_bob_swimming"
 ```
-You can have multiple appearance notecards for an NPC by renaming them. In this case the default notecard for Bob is stored as APP_bob and the 'swimming' dress is stored as APP_bob_swimming
 
-## USE command
 
-The NPC can sit on objects. The way it works is as follows:
+### Multiple appearances 
+
+You can have multiple appearance notecards for an NPC by renaming them. The default notecard for NPC Bob is stored in the APP_bob notecard. You can rename the notecard to, e.g.  APP_bob_swimming, and then ask bob to load that notecard:
+
+```
+Bob dress  swimming     : load the appearance from notecard "APP_bob_swimming"
+
+Bob dress               : load the NPC's default appearance from notecard "APP_bob" 
+```
+
+
+## Sitting on objects
+
+The NPCs can sit on objects with the  "use" command. 
 ```
 Bob use chair         
 ```
-Bob will attempt to find a SCRIPTED object named "chair" (You can change the Object Name from the properties box when editing it) near him and try to sit on it if its transparency (alpha) is less than 100%. Since, by convention, poseballs turn transparent when users sit on them, this ensures that Bob will not sit on an already-occupied poseball.
+Bob will attempt to find a SCRIPTED object (e.g. a poseball) named "chair" (You can change the Object Name from the properties box when editing it) near him and try to sit on it if its transparency (alpha) is less than 100%. Since by convention poseballs change their transparency to 100% when users sit on them, this ensures that Bob will not sit on an already-occupied poseball.
 
 ```
 Bob stand             : Bob will stand up if he is sitting
 ```
+
+
 ## Variables
-Variables can be used with IF commands for more complex scenarios. Variables are global and shared between notecards and NPCs. 
+Variables can be used with IF commands in notecards for more complex behavior.Variables are global and shared between notecards and NPCs. 
 ```
 Bob setvar foo 13                : set variable foo to be "13". Only string variables are supported. Variables can be used with IF blocks
-Bob setvar foo                   :  set variable foo to the empty string. The empty string is the default value if a variable does not exist
+
+Bob setvar foo                   :  set variable foo to the empty string. (The empty string is the default value if a variable does not exist)
+
 Bob say $foo        : Bob says "13"
+
 if var-is foo 13
    say foo is thirteen
 end-if
@@ -218,8 +258,7 @@ jump myLabel   :  like "jump" in LSL or "goto" in other languages. the label sho
 
 ## WAIT commands
 ```
-
-wait 200           : wait 200 seconds
+wait 200           : wait (i.e. don't do anything) for 200 seconds
 
 wait 200  300      : wait between 200 and 300 second before executing the next command
 
@@ -230,18 +269,7 @@ waitvar foo        : wait until the variable foo is empty.
 ```
 
 
-## Pathfinding commands
-
-The NPCs can find the paths between connected waypoints and walk from point A to point B. Because this is computationally intensive, only paths with less than 10 waypoints between them are supported. The following pathfinding commands are supported:
-
-```
-Bob go to Bar   : this uses pathfinding  to go to the waypoint with the name "Bar"
-Bob go to       : without  an argument, bob will print the names of waypoints he knows
-Bob goto 13     : go to waypoint #13 
-```
-
 ## Other commands
-
 
 ```
 Bob msgatt  attachment_command 12 13 14 15  
@@ -264,9 +292,11 @@ stop
 ```
 You can then say "Bob dance" to have bob execute the notecard
 
+
 # Interactive menus
 
-An interactive prompt allows the npcs to have complex interactions with users. The following notecard asks the user if they want apple or an orange and gives an object to them:
+With interactive menus, your NPCs can ask your visitors to make a choice from a menu in the local chat. The following notecard asks the user if they want apple or an orange and gives an object to them:
+
 ```
 say Welcome to the shop!
 @prompt
@@ -285,14 +315,25 @@ say Welcome to the shop!
 say Goodbye
 ```
 
-The prompt command prints out a string, and then waits for the user to type one of the words in square brackets (case insensitive). If a user types one of the words, it jumps to the label with the same name (e.g. if user types "Apple" , it jumps to the label @apple). If the user types something else, the script continues with the next line after the prompt command (here it complains to the user and starts over).
+Here is how it works:
+- The options of the menu are specified in the prompt string itself, in square brackets:
+```
+prompt Do you want an [apple] or an [orange]?
+```
+- Bob will say "Do you want an [apple] or an [orange]?" to the local chat, and it will expect to read the words "apple" or "orange" in the local chat from your visitor. 
+- If he hears "apple", he will jump to the label "@apple" in the notecard. 
+- If he hears "orange", he will jump to label "@orange" in the notecard. 
+- If he hears something else, he will not jump, but continue normally to the next notecard line  after the "prompt" line. (In our case, he asks again).
+- The menu options can only be single words (e.g. "orange", or "apple"). They are case-insensitive, and the menu will work even if the word is said in a phrase (I.e. "I want an apple" will still jump to @apple) 
 
 
-# Creating waypoints
+# Waypoints and Pathfinding
 
 You can use the controller to create waypoints and links between them in your region. Bob can then walk between the connected points when you say 'Bob leave'
 
-Each waypoint has a number (starting from 0) and optionally a name. Waypoints can be connected to other waypoints, thus creating a map (graph) between them. Bob can then wander between the waypoints (Say "Bob leave" to start walking), and you can also ask him to find his way from point A to point B (say Bob goto [destination]).
+Each waypoint has a number (starting from 0) and optionally a name. Waypoints can be connected to other waypoints, thus creating a map (graph) between them. Bob can then wander between the waypoints (Say "Bob leave" to start walking), and you can also ask him to find his way from point A to point B (say Bob go to [destination]).
+
+The waypoint data are stored in the __waypoints notecard, one in each line, and the links data is stored in the __links notecard. You do not need to edit these notecards by hand however, as you can use the included Waypoint Editor HUD.
 
 To create a map, first wear the WaypointEditor HUD.  If you already have created a map before, click RezPegs from the HUD menu. This will rez  a peg in each waypoint you have already created.  If you are starting with an empty map, you do not need to do this.
 
@@ -310,11 +351,13 @@ Note! Removing waypoints is not supported, as it would break the numbering and w
 
 
 ## Configuration
-Configurable options are added in the __config  notecard:
+Configurable options for the controller are added in the __config  notecard:
 ```
 AutoLoadOnReset=0
 ```
-Change AutoLoadOnReset=0 to AutoLoadOnReset=1 to make the controller rez the NPCs automatically on region restart or script reset. Please note that autoloading NPCs may not always work. 
+Change AutoLoadOnReset=0 to AutoLoadOnReset=1 to make the controller rez the NPCs automatically on region restart or script reset. Please note that autoloading NPCs may not always work well with some opensim versions.
+
+
 
 ## Initialization commands
 The notecard __initcommands contains initial commands to give to the NPCs. These commands are executed automatically after rezzing the NPCs when AutoLoadOnReset is on, or manually by clicking "InitCmds" from the controller menu.  You can thus use  the __initcommands  to add commands that set your NPCs in motion. Typically you would tell them to "leave" so that they start  walking. An example of __initcommands is : 
@@ -376,4 +419,8 @@ The controller checks the number of visitors in your region every 2 minutes. If 
 
 The controller runs a single timer, that updates the states of all the NPCs every 5 seconds. This allows it to be extremely lightweight, as it does not block any script processing, but it may also cause delays when executing commands. 
 
+
+# Bugs 
+
+The controller was tested with version 0.8.2.1 . There may be multiple issues with other versions. Please add an issue, or get in touch with Satyr Aeon @ hypergrid.org:8002 .
 
