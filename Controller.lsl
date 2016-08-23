@@ -14,7 +14,7 @@ list wNodeNames=[];
 //  list of nodes for the "Flyaround" command
 list flyTargets = [];
 
-list menuItems = ["SaveNPC", "LoadNPC", "RemoveNPC", "RemoveAll", "LoadAll", "ReConfig","InitCmds",  "DumpData", "TimerOnOff","Close"];
+list menuItems = ["SaveNPC", "LoadNPC", "RemoveNPC", "RemoveAll", "LoadAll", "ReConfig","InitCmds",  "DumpData", "TimerOnOff", "Close"];
 
 string userInputState ="";
 integer gListener;
@@ -569,20 +569,28 @@ integer ProcessNPCCommand(string inputString)
     string cmd2= llList2String(tokens,5);
     list userData;
     
-    if (npcName != name2 ) // Can happen if prompt
+    if (llList2String(aviStatus, idx) == "prompt")
     {
-            if (llList2String(aviStatus, idx) == "prompt")
+        aviStatus =  []+llListReplaceList(aviStatus, [""], idx, idx); // Turn off prompt in sync with the listener
+        if (npcName != name2 ) // it (probably) a response to the prompt, rather than a command given to the npc
+        {
+            integer i;
+            for (i=3; i < llGetListLength(tokens); i++)
             {
-                aviStatus =  []+llListReplaceList(aviStatus, [""], idx, idx); // No more prompt
-                if (llSubStringIndex(llList2String(aviPrompts, idx) , "["+llToLower(name2)+"]")>0) // label existed in prompt
+                
+                //llOwnerSay("I=" + (string) llSubStringIndex(llList2String(aviPrompts, idx), "["+ llToLower(llList2String(tokens, i)) +"]") );
+                if ( llSubStringIndex(llList2String(aviPrompts, idx), "["+llToLower(llList2String(tokens, i))+"]" ) > 0) // label existed in prompt
                 {
                     aviTarget =  []+llListReplaceList(aviTarget, [sendUid], idx, idx);
-                    ScriptJump(idx, name2, 1);
+                    ScriptJump(idx, llToLower(llList2String(tokens, i)) , 1);
+                    return 1;
                 }
-                return 1;
             }
-    }    
-    else if (cmd1 == "stop")
+            return 1; 
+        }
+    }
+    
+    if (cmd1 == "stop")
     {
         doStopNpc(idx, uNPC);
     }
@@ -878,8 +886,9 @@ integer ProcessNPCCommand(string inputString)
     }
     else if (cmd1 == "exec")
     {
-        list tok2 = ["!", "0000", cmd2] + llList2List(tokens, 5, -1);
-        ProcessNPCCommand(llList2CSV(tok2));
+        list tok2 = ["!", (string)NULL_KEY, cmd2] + llList2List(tokens, 5, -1);
+        //llOwnerSay(llList2CSV(tok2));
+        ProcessNPCCommand(llDumpList2String(tok2, " "));
     }
 
     else if (cmd1 == "msgatt")
@@ -1589,6 +1598,11 @@ default
             llDialog(avi, "Select an NPC to delete",  llList2List(availableNames, 0,10)+ "more", channel); 
             userInputState = "WAIT_REMOVEAVI";
         }
+        else if (mes == "UpdateNPC")
+        {
+            llDialog(avi, "Select an NPC to re-save appearance ", llList2List(availableNames, 0,10)+"more", channel);     
+            userInputState = "WAIT_UPDATE";
+        }
         else if (mes == "RemoveAll")
         {
             avis = osGetAvatarList();
@@ -1801,16 +1815,16 @@ default
                     doLoadNPC(mes);
 
                 }
-                else if (userInputState == "WAIT_SELECTAVI")
+                else if (userInputState == "WAIT_UPDATE")
                 {
-                    integer idx = llListFindList(aviNames, [""+mes]);
+                    integer idx = GetNPCIndex(mes);
                     if (idx >=0)
                     {
-                        aviIndex = idx;
-                        npc = llList2Key(aviUids, idx);
-                        name = llList2String(aviNames, idx);
-                        llSay(0,"Selected " + name + " " + (string)npc);
+                        key uu = llList2Key(aviUids, idx);
+                        osNpcSaveAppearance(uu, "APP_"+llToLower(mes));
+                        llOwnerSay("Updating  APP_"+llToLower(mes) );
                     }
+                    else llOwnerSay("Not found "+mes);
                 }
                 else if (userInputState == "WAIT_REMOVEAVI")
                 {
@@ -1833,7 +1847,7 @@ default
 
     changed(integer change)
     {
-        if (change & CHANGED_REGION_START)
+        if (change & (CHANGED_REGION_START | CHANGED_OWNER | CHANGED_REGION))
         {
             llResetScript();
         }
