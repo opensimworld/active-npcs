@@ -8,32 +8,26 @@ http://opensimworld.com/hop/74730-OpenSimWorld
 
 (move down near the bunker to find the package)
 
-
 Please visit https://github.com/opensimworld/active-npcs/edit/master/README.md for an up-to-date version of this documentation.
 
-Please send questions and comments here: http://opensimworld.com/forum/viewtopic.php?id=2
 
+# Quickstart
 
+The controller requires OSSL functions to work. You need to have permission to use the osNpc*() functions and, additionally: , osGetNotecard(), osGetNotecardLines(), osMessageAttachments(), osSetSpeed(). The controller uses the channel 68 to communicate. 
 
+To start using the controller:
+- Rez the OSW NPC Controller object somewhere in your region. Make sure your avatar is within distance of 20m or less from the controller
+- Wear the OSW NPC Listener object (it should attach automatically to your Right Pec!)
+- Edit the __npc_names notecard, and replace its contents with the FIRST NAME of your first NPC e.g. Bob
+- Touch the controller -> select ReConfig
+- Touch the controller, Select SaveNPC -> Bob.
+- Touch the controller -> LoadNPC -> Bob
+Your npc should now be responding to commands , e.g. "Bob come"
 
+To add more NPCs,  add their names to the __npc_names notecard. Add  the *first* name of each NPC, in a line by itself. The last name of your npcs will be "(NPC)". After editing the notecard,  select "ReConfig" from the controller menu.
 
-# Installation
-
-The controller requires OSSL functions to work. Apart from the osNpc*() functions you should also enable: osListenRegex(), osGetNotecard(), osMessageAttachments(), osSetSpeed().   The controller uses channel 68 for all its functions. 
-
-To start using the controller, rez the OSW NPC Controller object somewhere in your region. 
-
-Before you create a new NPC, you need to add their name to the __npc_names notecard. Edit the __npc_names notecard, and add the *first* name of your NPC, in a new line by itself. The last name of your NPCs will always be (NPC). 
-
-*After making changes in the notecard,  click on the controller and select "ReConfig"*.
-
-To create an NPC appearance notecard, dress yourself as you want the NPC to look, and  wear the "OSW NPC Listener" object on your RIGHT PEC. The Listener is an object that  listens  for commands from the local chat and sends them to the NPC Controller for processing. When you are happy with your appearance, make sure you are wearing the Listener, move within 20 meters near the controller,  click on the controller, select SaveNPC, and then NPC you wish to create.  You should see a message "Appearance saved to APP_xxxx" in a few seconds. This means your appearance has been saved in a notecard inside the controller. 
-
-You can now load your NPC to test them. Click the controller, click LoadNPC, then the name of the NPC.  If all has gone well, your NPC should now respond to commands. Try saying "[name] come" or "[name] follow me"  in the local chat near the NPC to test them. If all is going well, the NPC will respond. If not, remove the NPC and try again.
 
 # Controller object Contents
-
-The controller contains a number of items:
 
 * The controller script (..Controller). This is the single script that runs everything.
 * An example extension script (..Extension). This can be used to add commands to the system (explained below).
@@ -49,7 +43,7 @@ The controller contains a number of items:
 * The Waypoint HUD is used to edit the map and create/update the __waypoints and __links notecards
 
 
-# Supported commands for NPCs
+# Overview of commands
 
 The NPCs respond to commands that you give to them through the local chat. 
 
