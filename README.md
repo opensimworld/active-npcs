@@ -100,10 +100,10 @@ When giving commands through the local chat, commands must be preceded by the fi
   
   Bob runtovr <23,24,25>  <33,34,25>  : same as above, but run
 
-'''
+```
 * * Note: never leave spaces in coordinate vectors, i.e. <23,24,25> NOT <23, 24, 25> **
 
-'''
+```
 Bob say hi                            : Says "hi" on public channel 
 
 Bob saych 90 blablah                  : say "blablah" on channel 90
