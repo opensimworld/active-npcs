@@ -101,7 +101,55 @@ When giving commands through the local chat, commands must be preceded by the fi
   Bob runtovr <23,24,25>  <33,34,25>  : same as above, but run
 
   ** Note: never leave spaces in coordinate vectors, i.e. <23,24,25> NOT <23, 24, 25> **
+
+
+Bob say hi                            : Says "hi" on public channel 
+Bob saych 90 blablah                  : say "blablah" on channel 90
+Bob shout Blah bleh
+Bob teleport Bar                            : Teleports bob to the waypoint named "Bar"
+Bob teleport <23,30,40>                     : Teleports to a point. REMEMBER to never leave spaces inside the vector string
 ```
+
+```
+Bob lookat me            : attempts to look at you 
+
+Bob lookat <x,y,z>       : look towards point x,y,z
+
+Bob lookat Bar           : look towards the waypoint named "Bar"
+
+Bob anim dance           : play animation "dance" . the animation must be in the inventory of the controller object
+
+Bob sound 1c8a3af2-6e5a-4807-a7a3-a42e5744217c 1.0   : The NPC will play the sound with the given UUID  at the volume specified by the second parameter (1.0 is max volume)
+
+Bob light               :  turn on/off a light the NPCs have on them
+
+Bob give Apple      : Give the object "Apple" from the controller's inventory to the user. For security, only objects can be given.
+
+Bob follow me
+
+Bob follow  Alice       : follow the avatar whose first name is 'Alice'
+
+Bob fly with me
+
+Bob fly with alice      : fly with another user
+
+Bob stop                : Stops his animation and his movement, and stops following you
+
+Bob leave               : Start wandering  between waypoints
+
+Bob setpath 0:1:3:5:1:0            : Walk through the given waypoints, i.e. walk to waypoint 0 , then to 1, then to 3, then to 5 etc. 
+
+Bob run-notecard my_script.scr     : Execute the contents of the notecard my_script.scr (the notecard must be in the controller inventory
+
+Bob batch say hi ; wait 10; say bye     : Executes multiple commands one after the other. Commands are separated by ";"
+
+Bob stop-script         : stop executing the notecard script
+
+Bob dress               : load the appearance from notecard "APP_bob" (The default appearance notecard)
+
+Bob dress  swimming     : load the appearance from notecard "APP_bob_swimming"
+```
+You can have multiple appearance notecards for an NPC by renaming them. In this case the default notecard for Bob is stored as APP_bob and the 'swimming' dress is stored as APP_bob_swimming
 
 ## USE command
 
@@ -193,54 +241,6 @@ Bob goto 13     : go to waypoint #13
 ```
 
 ## Other commands
-```
-Bob say hi                            : Says "hi" on public channel 
-Bob saych 90 blablah                  : say "blablah" on channel 90
-Bob shout Blah bleh
-Bob teleport Bar                            : Teleports bob to the waypoint named "Bar"
-Bob teleport <23,30,40>                     : Teleports to a point. REMEMBER to never leave spaces inside the vector string
-```
-
-```
-Bob lookat me            : attempts to look at you 
-
-Bob lookat <x,y,z>       : look towards point x,y,z
-
-Bob lookat Bar           : look towards the waypoint named "Bar"
-
-Bob anim dance           : play animation "dance" . the animation must be in the inventory of the controller object
-
-Bob sound 1c8a3af2-6e5a-4807-a7a3-a42e5744217c 1.0   : The NPC will play the sound with the given UUID  at the volume specified by the second parameter (1.0 is max volume)
-
-Bob light               :  turn on/off a light the NPCs have on them
-
-Bob give Apple      : Give the object "Apple" from the controller's inventory to the user. For security, only objects can be given.
-
-Bob follow me
-
-Bob follow  Alice       : follow the avatar whose first name is 'Alice'
-
-Bob fly with me
-
-Bob fly with alice      : fly with another user
-
-Bob stop                : Stops his animation and his movement, and stops following you
-
-Bob leave               : Start wandering  between waypoints
-
-Bob setpath 0:1:3:5:1:0            : Walk through the given waypoints, i.e. walk to waypoint 0 , then to 1, then to 3, then to 5 etc. 
-
-Bob run-notecard my_script.scr     : Execute the contents of the notecard my_script.scr (the notecard must be in the controller inventory
-
-Bob batch say hi ; wait 10; say bye     : Executes multiple commands one after the other. Commands are separated by ";"
-
-Bob stop-script         : stop executing the notecard script
-
-Bob dress               : load the appearance from notecard "APP_bob" (The default appearance notecard)
-
-Bob dress  swimming     : load the appearance from notecard "APP_bob_swimming"
-```
-You can have multiple appearance notecards for an NPC by renaming them. In this case the default notecard for Bob is stored as APP_bob and the 'swimming' dress is stored as APP_bob_swimming
 
 
 ```
