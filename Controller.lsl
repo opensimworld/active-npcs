@@ -41,6 +41,7 @@ list scriptVars;
 list aviScriptState;
 list aviPrompts;
 list cache;
+string LastName;
 
 integer aviIndex = -1;
 list seenArchive;
@@ -117,13 +118,21 @@ ReloadConfig()
     llOwnerSay("__npc_names: "+llList2CSV(availableNames));
     string ncName = "__config";
     autoLoadOnReset=0;
+
     if (llGetInventoryType(ncName) == INVENTORY_NOTECARD)
     {
         list tok = llParseString2List(osGetNotecard("__config"), ["=", "\n"] , []);
-        integer idx = llListFindList(tok, "AutoLoadOnReset");
-        if (idx >=0 && ((integer)llList2String(tok, idx+1))==1 )
-                autoLoadOnReset = 1;
+        integer j;
+        for (j=0; j < llGetListLength(tok); j+=2)
+        {
+            string opt = llList2String(tok,j);
+            if (opt== "AutoLoadOnReset") autoLoadOnReset = (integer)llList2String(tok, j+1);
+            else if (opt== "LastName") LastName = llList2String(tok, j+1);
+            
+        }
     }
+    if (LastName == "") LastName = "(NPC)";
+
 }
 
 
@@ -161,7 +170,7 @@ doLoadNPC(string mes)
             osNpcStand(llList2Key(aviUids, idx));
             return;
         }
-        key unpc = osNpcCreate(mes, "(NPC)", llGetPos()+<0,0,3>, "APP_"+llToLower(mes),  OS_NPC_NOT_OWNED | OS_NPC_SENSE_AS_AGENT);
+        key unpc = osNpcCreate(mes, LastName, llGetPos()+<0,0,3>, "APP_"+llToLower(mes),  OS_NPC_NOT_OWNED | OS_NPC_SENSE_AS_AGENT);
         if (unpc != NULL_KEY)
             doAddNpc(mes, unpc);
 }
@@ -598,8 +607,8 @@ integer ProcessNPCCommand(string inputString)
     {
         doStopNpc(idx, uNPC);
         userData=llGetObjectDetails((key)sendUid, [OBJECT_NAME,OBJECT_POS, OBJECT_ROT]);
-        osNpcStopMoveToTarget(uNPC);
         osTeleportAgent(uNPC, llList2Vector(userData, 1) + <1, 0, 0>, <1,1,1>);
+        osNpcStopMoveToTarget(uNPC);
         if (sendUid != NULL_KEY) // NOTE: a real avatar sent this command - stop processing our script
              aviScriptIndex  =  []+llListReplaceList(aviScriptIndex, -1, idx, idx);
     }
@@ -755,11 +764,12 @@ integer ProcessNPCCommand(string inputString)
         // Do nothing
         return 0;
     }
-    else if (cmd1 == "prompt")
+    else if (cmd1 == "prompt" || cmd1 == "qprompt")
     { 
         string prompt = llDumpList2String(llList2List(tokens, 5, -1), " ");
         aviStatus =  []+llListReplaceList(aviStatus, ["prompt"], idx, idx);
-        osNpcSay(uNPC, prompt);
+        if (cmd1 == "prompt")
+            osNpcSay(uNPC, prompt);
         aviPrompts = []+llListReplaceList(aviPrompts, [llToLower(inputString)], idx, idx);
         aviTarget =  []+llListReplaceList(aviTarget, [NULL_KEY], idx, idx);
         osMessageAttachments(uNPC, "prompt", [ATTACH_RIGHT_PEC], 0);
@@ -917,7 +927,7 @@ integer ProcessNPCCommand(string inputString)
         }
         else osTeleportAgent(uNPC, w, <0,0,0>);
     }
-    else if (cmd1 == "use")
+    else if (cmd1 == "use"  || cmd1 == "sit")
     {
         // Sit-on-a-poseball command
         string cmd = llStringTrim(cmd2+" "+llList2String(tokens, 6)+" "+llList2String(tokens,7), STRING_TRIM);
@@ -1261,6 +1271,7 @@ default
         
         if (autoLoadOnReset)
         {
+            llSleep(10);
             doLoadAll();
             llSleep(10); // Need to wait for their listeners attachments to start
             doInitCmds();
@@ -1410,6 +1421,7 @@ default
                             osNpcMoveToTarget(npc, v + <llFrand(1.0),llFrand(1.0), 0.1> , OS_NPC_NO_FLY );
                         }
                     }
+                    return;
                 }
                 else if (status == "prompt")
                 {
@@ -1514,23 +1526,27 @@ default
             if (idx<0) return;
             key unpc = llList2Key(aviUids, idx);
             integer i;
+            key ball;
             for (i=2; i < llGetListLength(tok);i++)
             {
-                key ball = llList2String(tok, i);
+                ball = llList2String(tok, i);
                 list prop = osGetPrimitiveParams(ball, [PRIM_COLOR, 0]); /// This only works we own the poseball
                 float alpha = 1.0;
                 if (llGetListLength(prop)>0)  alpha = llList2Float(prop, 1);
                 if (alpha >0)
                 {
-                        osNpcStand(unpc);
-                        osNpcStopMoveToTarget(unpc);
-                        osNpcSit(unpc, ball, OS_NPC_SIT_NOW);
-                        aviStatus =  []+llListReplaceList(aviStatus, ["sitting"], idx, idx);
                         jump ballFound;
                 }
             } 
-            llOwnerSay(npcname + ": All balls transparent");  
+            //llOwnerSay(npcname + ": All balls transparent");  
             @ballFound;
+            if (ball != NULL_KEY)
+            {
+                    osNpcStand(unpc);
+                    osNpcStopMoveToTarget(unpc);
+                    osNpcSit(unpc, ball, OS_NPC_SIT_NOW);
+                    aviStatus =  []+llListReplaceList(aviStatus, ["sitting"], idx, idx);
+            }
         }
         else if (mes == "SETVAR")
         {
@@ -1577,6 +1593,14 @@ default
               list btns = ["Close", "RezPegs", "SaveCards", "AddPeg", "DeletePeg", "LinkPegs", "UnlinkPegs", "ScanPegs", "ClearPegs", "SetName"];
               llDialog(llGetOwner(), "First peg: "+ (string)curPoint+ " Second peg: "+(string)prevPoint, btns, 68);
               return;
+        }
+        else if (mes =="LISTENERSTART")
+        {
+            list ll = llParseString2List(str, [" "] ,[]);
+            key npcKey = llList2Key(ll, 2);
+            llOwnerSay("Got LISTENERSTART "+str);
+            //osMessageAttachments(npcKey, "controllerkey "+(string)llGetKey(), [ATTACH_RIGHT_PEC], 0);
+            //osMessageObject(id, "controllerkey "+(string)llGetKey());
         }
 
         
@@ -1835,7 +1859,11 @@ default
             }
         }
     }
-    
+
+    dataserver(key id, string str)
+    {
+        ProcessNPCCommand(str);
+    }
     
     link_message(integer lnk, integer num, string command, key npc) // This script is in the object too.
     {
