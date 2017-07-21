@@ -1,5 +1,5 @@
-/* Simple greeter that checks for visitors. If a new, previously unseen visitor is found, 
-   it sends a number of commands to an NPC. You can add 
+/* Simple greeter script that checks for visitors. If a new, previously unseen visitor is found, 
+   it sends a number of commands to an NPC. */
 
 list seen = [];
 list alreadyGreeted = [];
