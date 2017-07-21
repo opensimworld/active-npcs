@@ -2,10 +2,13 @@ integer channel = 68;
 integer PEG_CHAN=699;
 integer TIMER_INTERVAL=5; // how often to run the timer
 integer autoLoadOnReset=0;
+string LASTNAME="(NPC)";
+
 
 // Nothing to edit here, see https://github.com/opensimworld/active-npcs for configuration
 
 list availableNames = [];
+list lastNames = [];
 // These will be loaded from notecards
 list wNodes = [];
 list wLinks = [];
@@ -41,7 +44,7 @@ list scriptVars;
 list aviScriptState;
 list aviPrompts;
 list cache;
-string LastName;
+
 
 integer aviIndex = -1;
 list seenArchive;
@@ -61,6 +64,19 @@ key npc;
 key avi;
 list candidateNode=[];
 
+
+
+string vec2str(vector v)
+{
+    return "<"+v.x+","+v.y+","+v.z+">";
+}
+
+string GetLastName(string first)
+{
+    integer idx = llListFindList(availableNames, [first]);
+    if (idx >=0) return llList2String(lastNames, idx);
+    else return LASTNAME;
+}
 
 key getAgentByName(string firstName)
 {
@@ -112,10 +128,26 @@ integer ScriptJump(integer idx, string label, integer complain)
 
 ReloadConfig()
 {
-    
-    availableNames = llParseString2List(osGetNotecard("__npc_names"), [" ", "\n", ","] , []);
+    availableNames = [];
+    lastNames = [];
+    list tk = llParseString2List(osGetNotecard("__npc_names"), ["\n"] , []);
+    integer i=0;
+    for (i=0; i < llGetListLength(tk); i++)
+    {
+        list t2 = llParseString2List(llList2String(tk,i), [" "] , []);
+        string f = llList2String(t2, 0);
+        string l = llList2String(t2, 1);
+        if (l =="") l = LASTNAME;
+        if (f != "")
+        {
+            availableNames += f;
+            lastNames += l;
+        }
+    }
+    llOwnerSay("npc_names: "+llList2CSV(availableNames));
+        
     flyTargets = llParseString2List(osGetNotecard("__fly_targets"), [" ", "\n", ""] , []);
-    llOwnerSay("__npc_names: "+llList2CSV(availableNames));
+
     string ncName = "__config";
     autoLoadOnReset=0;
 
@@ -127,11 +159,10 @@ ReloadConfig()
         {
             string opt = llList2String(tok,j);
             if (opt== "AutoLoadOnReset") autoLoadOnReset = (integer)llList2String(tok, j+1);
-            else if (opt== "LastName") LastName = llList2String(tok, j+1);
-            
+            else if (opt== "LastName") LASTNAME = llList2String(tok, j+1);
         }
     }
-    if (LastName == "") LastName = "(NPC)";
+    if (LASTNAME == "") LASTNAME = "(NPC)";
 
 }
 
@@ -161,19 +192,21 @@ integer countVisitors()
     return nNew;
 }
 
-doLoadNPC(string mes)
+doLoadNPC(string first, string last)
 {                 
-        integer idx =(GetNPCIndex(mes));
+        integer idx =(GetNPCIndex(first));
         if (idx >=0)
         {
-            llOwnerSay(mes + " is already in region, not loading");
+            llOwnerSay(first+ " is already in region, not loading");
             osNpcStand(llList2Key(aviUids, idx));
             return;
         }
-        key unpc = osNpcCreate(mes, LastName, llGetPos()+<0,0,3>, "APP_"+llToLower(mes),  OS_NPC_NOT_OWNED | OS_NPC_SENSE_AS_AGENT);
+
+        key unpc = osNpcCreate(first, last, llGetPos()+<0,0,3>, "APP_"+llToLower(first),  0);
         if (unpc != NULL_KEY)
-            doAddNpc(mes, unpc);
+            doAddNpc(first, unpc);
 }
+
 
 doAddNpc(string name, string unpc)
 {
@@ -240,7 +273,7 @@ doLoadAll()
             }
             for (i=0; i < llGetListLength(availableNames);i++)
             {
-                doLoadNPC(llList2String(availableNames, i));
+                doLoadNPC(llList2String(availableNames, i),  llList2String(lastNames, i));
             }
     
 }
@@ -344,7 +377,7 @@ integer GetNPCIndex(string name) /// name is in lowercase
 
 integer GetWalkTime(float distance)
 {
-    return llCeil(distance / 2.0);
+    return llCeil(distance / 1.7);
 }
 
 integer GetNearestNode(vector pos)
@@ -415,9 +448,7 @@ string GetGotoPath(integer nodeA, integer nodeB)
 {
     integer i;
     integer ww;
-    
-
-    //llOwnerSay("From " + (string)nodeA+ " to  " +(string)nodeB);
+ 
     
     string tmpPath = ":"+(string)nodeA+":";
     
@@ -587,7 +618,6 @@ integer ProcessNPCCommand(string inputString)
             for (i=3; i < llGetListLength(tokens); i++)
             {
                 
-                //llOwnerSay("I=" + (string) llSubStringIndex(llList2String(aviPrompts, idx), "["+ llToLower(llList2String(tokens, i)) +"]") );
                 if ( llSubStringIndex(llList2String(aviPrompts, idx), "["+llToLower(llList2String(tokens, i))+"]" ) > 0) // label existed in prompt
                 {
                     aviTarget =  []+llListReplaceList(aviTarget, [sendUid], idx, idx);
@@ -607,8 +637,8 @@ integer ProcessNPCCommand(string inputString)
     {
         doStopNpc(idx, uNPC);
         userData=llGetObjectDetails((key)sendUid, [OBJECT_NAME,OBJECT_POS, OBJECT_ROT]);
-        osTeleportAgent(uNPC, llList2Vector(userData, 1) + <1, 0, 0>, <1,1,1>);
         osNpcStopMoveToTarget(uNPC);
+        osTeleportAgent(uNPC, llList2Vector(userData, 1) + <1, 0, 0>, <1,1,1>);
         if (sendUid != NULL_KEY) // NOTE: a real avatar sent this command - stop processing our script
              aviScriptIndex  =  []+llListReplaceList(aviScriptIndex, -1, idx, idx);
     }
@@ -747,7 +777,6 @@ integer ProcessNPCCommand(string inputString)
         if (!res)
         {
             integer foundLine = FindMatchingEndif(llList2String(aviScriptText,idx), scrline-1); /// this used to skip a line
-            //llOwnerSay("End-if found: "+(string)foundLine);
             if (foundLine == -1)
             {
                 llOwnerSay("Error: end-if not found afterr "+cmd1 + " "+cmd2 + "...");
@@ -764,12 +793,11 @@ integer ProcessNPCCommand(string inputString)
         // Do nothing
         return 0;
     }
-    else if (cmd1 == "prompt" || cmd1 == "qprompt")
+    else if (cmd1 == "prompt")
     { 
         string prompt = llDumpList2String(llList2List(tokens, 5, -1), " ");
         aviStatus =  []+llListReplaceList(aviStatus, ["prompt"], idx, idx);
-        if (cmd1 == "prompt")
-            osNpcSay(uNPC, prompt);
+        osNpcSay(uNPC, prompt);
         aviPrompts = []+llListReplaceList(aviPrompts, [llToLower(inputString)], idx, idx);
         aviTarget =  []+llListReplaceList(aviTarget, [NULL_KEY], idx, idx);
         osMessageAttachments(uNPC, "prompt", [ATTACH_RIGHT_PEC], 0);
@@ -783,8 +811,6 @@ integer ProcessNPCCommand(string inputString)
     else if ((cmd1 == "go" && cmd2 == "to")   || cmd1 == "goto")
     {
         // Pathfinding command
-        // Goto: go to specified waypoint
-        // Go to <target>: go to the waypoint named <target>
         integer nearest = GetNearestNode(osNpcGetPos(uNPC));
         integer foundId =-1;        
         if (cmd1 == "goto")
@@ -838,7 +864,7 @@ integer ProcessNPCCommand(string inputString)
     }
     else if (cmd1 == "setpath")
     {
-        // Sets a path between waypoints for the NPC to walk. Path must be in format 2:4:63:22:1 where the numbers are the waypoints numbers
+        //Path must be in format 2:4:63:22:1 where the numbers are the waypoints numbers
         aviPath = []+ llListReplaceList(aviPath, [cmd2], idx, idx);
         SetScriptAlarm(idx, 0);
         aviStatus =  []+llListReplaceList(aviStatus, ["pathf"], idx, idx);
@@ -863,6 +889,15 @@ integer ProcessNPCCommand(string inputString)
             {
                 aviScriptIndex = []+llListReplaceList(aviScriptIndex, [scriptIndex-1], idx, idx);
             }
+    }
+    else if  (cmd1 == "increase" || cmd1 == "decrease" || cmd1 == "zero")
+    {
+        integer v = (integer)GetScriptVar(cmd2);
+        if (cmd1=="increase") v++;
+        else if (cmd1 == "decrease") v--;
+        else v=0;
+        setVar(cmd2, (string)v);
+        return 1;
     }
     else if (cmd1 == "wait")
     {
@@ -927,7 +962,7 @@ integer ProcessNPCCommand(string inputString)
         }
         else osTeleportAgent(uNPC, w, <0,0,0>);
     }
-    else if (cmd1 == "use"  || cmd1 == "sit")
+    else if (cmd1 == "use")
     {
         // Sit-on-a-poseball command
         string cmd = llStringTrim(cmd2+" "+llList2String(tokens, 6)+" "+llList2String(tokens,7), STRING_TRIM);
@@ -1245,7 +1280,7 @@ giveCommands(integer n)
         }
     }
     
-    string wstr = (string)n+"|SETDATA|"+(string)llList2Vector(wayPoints, n);
+    string wstr = (string)n+"|SETDATA|"+vec2str(llList2Vector(wayPoints, n));
     wstr += "|"+llList2String(wayNames, n)+"|"+lstr+"|0|"+llList2CSV(lnks);
     //llOwnerSay(wstr);
     llRegionSay(PEG_CHAN, wstr);
@@ -1563,7 +1598,7 @@ default
                 prevPoint = curPoint;
                 curPoint = num;
             }
-            //llOwnerSay("Current peg="+curPoint);
+
              list btns = ["Close", "LinkPegs", "UnlinkPegs", "SetName"];
             llDialog(llGetOwner(), "Current peg: "+ (string)curPoint+ " Previous: "+(string)prevPoint, btns, channel);
             return;
@@ -1574,7 +1609,7 @@ default
             integer num = llList2Integer(ll, 1);
             key k = llList2Key(ll, 2);
             wayKeys = [] + llListReplaceList(wayKeys, [k], num,num);
-            //llOwnerSay("Pos="+num+" k="+k);
+
         }
         else if  (llGetSubString(mes, 0, 6) == "MARKER|")
         {
@@ -1584,8 +1619,7 @@ default
             vector pos = llList2Vector(ll, 2);
             key tk = llList2Key(ll, 4);
             wayPoints = llListReplaceList(wayPoints, [pos], num,num);
-            //wayKeys = llListReplaceList(wayKeys, [tk], num,num);
-            //llOwnerSay("Updated k=  pos for peg "+ (string)num);
+
             return;
         }
         else if (mes == "ShowPegDialog")
@@ -1593,14 +1627,6 @@ default
               list btns = ["Close", "RezPegs", "SaveCards", "AddPeg", "DeletePeg", "LinkPegs", "UnlinkPegs", "ScanPegs", "ClearPegs", "SetName"];
               llDialog(llGetOwner(), "First peg: "+ (string)curPoint+ " Second peg: "+(string)prevPoint, btns, 68);
               return;
-        }
-        else if (mes =="LISTENERSTART")
-        {
-            list ll = llParseString2List(str, [" "] ,[]);
-            key npcKey = llList2Key(ll, 2);
-            llOwnerSay("Got LISTENERSTART "+str);
-            //osMessageAttachments(npcKey, "controllerkey "+(string)llGetKey(), [ATTACH_RIGHT_PEC], 0);
-            //osMessageObject(id, "controllerkey "+(string)llGetKey());
         }
 
         
@@ -1731,7 +1757,6 @@ default
         }
         else if (mes == "ClearPegs")
         {
-            llOwnerSay("User = " + (string)id);
             llRegionSay(PEG_CHAN, "die");
         }
         else if (mes == "ScanPegs")
@@ -1836,7 +1861,7 @@ default
                 }
                 else if (userInputState == "WAIT_AVINAME")
                 {
-                    doLoadNPC(mes);
+                    doLoadNPC(mes, GetLastName(mes));
 
                 }
                 else if (userInputState == "WAIT_UPDATE")
@@ -1859,11 +1884,7 @@ default
             }
         }
     }
-
-    dataserver(key id, string str)
-    {
-        ProcessNPCCommand(str);
-    }
+    
     
     link_message(integer lnk, integer num, string command, key npc) // This script is in the object too.
     {
