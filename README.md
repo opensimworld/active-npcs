@@ -193,7 +193,7 @@ The NPCs can sit on objects with the  "use" command.
 ```
 Bob use chair         
 ```
-Bob will attempt to find a SCRIPTED object (e.g. a poseball) named "chair" (You can change the Object Name from the properties box when editing it) near him and try to sit on it if its transparency (alpha) is less than 100%. Since by convention poseballs change their transparency to 100% when users sit on them, this ensures that Bob will not sit on an already-occupied poseball.
+Bob will attempt to find a SCRIPTED object (e.g. a poseball) named "chair" (You can change the Object Name from the properties box when editing it) near him and try to sit on it if its transparency (alpha) is less than 100%. Since by convention poseballs change their transparency to 100% when users sit on them, this ensures that Bob will not sit on an already-occupied poseball. If you just say "Bob use", the NPC will sit on the nearest scripted object.
 
 ```
 Bob stand             : Bob will stand up if he is sitting
@@ -216,8 +216,30 @@ if var-is foo
    say foo is empty string or not set 
 end-if
 
-waitvar foo 13    : wait until the variable foo becomes 13
+waitvar foo 13    : wait (and do nothing) until the variable foo becomes 13
 ```
+
+The following commands increase and decrease a variable by 1. They are useful in cases where you want 2 or more avatars to be present to proceed:
+```
+increase totalAvatarsHere  : Increase the variable "totalAvatarsHere" by 1
+
+decrease totalAvatarsHere  : Decrease the variable "totalAvatarsHere" by 1
+
+zero totalAvatarsHere   : Set variable totalAvatarsHere to 0 (same as setvar totalAvatarsHere 0)
+```
+Example usage in a notecard:
+```
+increase totalAvatarsHere
+waitvar totalAvatasHere 2
+ say Now there are 2 of us
+ anim dance
+ wait 10
+ stop
+ ...
+ say Time to depart
+decrease totalAvatarsHere
+```
+
 
 ## IF commands
 There is support for multiple levels of IF blocks. Blocks must end with "end-if". There is no "else" command, but you can achieve the same effect with "jump" commands
@@ -259,7 +281,7 @@ jump myLabel   :  like "jump" in LSL or "goto" in other languages. the label sho
 
 ## WAIT commands
 ```
-wait 200           : wait (i.e. don't do anything) for 200 seconds
+wait 200           : wait (don't do anything) for 200 seconds
 
 wait 200  300      : wait between 200 and 300 second before executing the next command
 
