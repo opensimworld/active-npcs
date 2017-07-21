@@ -20,14 +20,16 @@ The controller requires OSSL functions to work. You need to have permission to u
 To start using the controller:
 - Rez the OSW NPC Controller object somewhere in your region. Make sure your avatar is within distance of 20m or less from the controller
 - Wear the OSW NPC Listener object (it should attach automatically to your Right Pec!)
-- Edit the __npc_names notecard, and replace its contents with the FIRST NAME of your first NPC e.g. Bob
-- Touch the controller -> select ReConfig
-- Touch the controller, Select SaveNPC -> Bob (You should see a message "Saved appearance xxx-xxx -> APP_bob"
+- Edit the `__npc_names` notecard, and place first name and last names of each of your NPCs in a line by itself. Example:
+```
+Bob TheRobot
+Alice TheNPC
+```
+- Touch the controller ->  ReConfig
+- Touch the controller,  SaveNPC -> Bob (You should see a message "Saved appearance xxx-xxx -> APP_bob"
 - Touch the controller -> LoadNPC -> Bob
 
 Your npc should now be responding to commands , e.g. "Bob come"
-
-To add more NPCs,  add their names to the __npc_names notecard. Add  the *first* name of each NPC, in a line by itself. The last name of your npcs will be "(NPC)". After editing the notecard,  select "ReConfig" from the controller menu.
 
 
 # Controller object Contents
@@ -35,16 +37,15 @@ To add more NPCs,  add their names to the __npc_names notecard. Add  the *first*
 * The controller script (..Controller). This is the single script that runs everything.
 * An example extension script (..Extension). This can be used to add commands to the system (explained below).
 * The Listener object. All our NPCs must wear this invisible object on their Right Pec. This object listens for commands from the local chat and forwards them to the controller script for processing.
-* The __npc_names notecard. This notecard contains the first names of the NPCs, one in each line. The last name is always "(NPC)" . After making changes to this notecard, select "Reconfig" from the controller menu.
+* The __npc_names notecard. This notecard contains the  names of the NPCs, one in each line . After making changes to this notecard, select "Reconfig" from the controller menu.
 * The __initcommands notecard. This is a notecard with the commands that are executed when you click  "InitCmds" on the controller menu.
 * The __waypoints notecard. This contains a list of points in your region. The NPCs can walk from one point to the other, if they are connected (via the __links notecard) . *You do not need to edit this by hand. There is an HUD for editing the map*
 * The __links notecard. This contains a list of pairs of connected points. I.e. if you want to link point 1 to point 2, there will be a line "1,2" in the notecard. *You do not need to edit this by hand. There is an HUD for editing the map*
 * The __config notecard. This contains configuration ootions.
-* Command notecards. You can put a list of commands that the NPC will execute in a notecard named [command-name].scr. You can then order your NPCs to execute them in the chat. E.g. if you create a notecard "dance.scr", you can say "Bob dance" to execute it.
+* Command notecards. You can put any list of commands for NPCs a notecard named [command-name].scr. You can then order your NPCs to execute the notecards from the local chat. E.g. if you create a notecard "dance.scr", you can say "Bob dance" to execute it.
 * Waypoint notecards. Notecards named _1.scr , _2.scr etc are executed automatically when the NPCs reach the waypoint number 1, number 2 etc. 
 * The appearance notecards are stored as APP_[firstname] for each NPC. You can also have multiple appearances per NPC (see below). 
 * The Waypoint HUD is used to edit the map and create/update the __waypoints and __links notecards
-
 
 # Overview of commands
 
