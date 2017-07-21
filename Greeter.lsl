@@ -1,5 +1,6 @@
 /* Simple greeter script that checks for visitors. If a new, previously unseen visitor is found, 
-   it sends a number of commands to an NPC. */
+   it sends a number of commands to an NPC.  The commands teleport the NPC in front  of the user, and say a welcome message. 
+   */
 
 list seen = [];
 list alreadyGreeted = [];
