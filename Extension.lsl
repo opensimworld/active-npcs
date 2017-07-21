@@ -1,3 +1,8 @@
+/* Example extension script. 
+ * Extension commands are executed if (a) the command is not a built-in commands and (b) a notecard named <command>.scr does not exist
+ * The commands are implemented through the link_message below. 
+ */
+
 
 key getAgentByName(string firstName)
 {
@@ -47,28 +52,69 @@ default
            
             if (cmd1=="hide" || cmd1 == "show")
             {
-                // This can be used to hide-show appropriately-scripted attachments
-                osMessageAttachments(uNPC, cmd2+"-"+cmd1, [ATTACH_LHAND, ATTACH_RHAND], 0);
+                // This can be used to hide-show attachments in the hands that use the ClothesListener script.
+                osMessageAttachments(uNPC, cmd2+"-"+cmd1, [OS_ATTACH_MSG_ALL], 0);
             }
             else if (cmd1 == "help")
             {
                 osNpcSay(uNPC, "Say '"+ npcName+ " <command>', where <command> can be: 'follow ', 'fly with me', 'use', 'go to', 'dance', 'stand', 'stop', 'light', 'leave'.");
             }
-            else if (cmd1 == "go") //take a step back (b) forward (f) right (r) or left (l)
+            else if (cmd1 == "go") //walk back (b) forward (f) right (r) or left (l)
             {
+            
                 rotation r = osNpcGetRot(uNPC);
                 vector v = osNpcGetPos(uNPC);
+                float mf = (float)cmd2;
+                if  (mf <=0) mf = 1.; // Default one meter
                 vector m;
                 if (cmd2 == "f") m = <1,0,0>;
                 else if (cmd2 == "b") m = <-1,0,0>;
                 else if (cmd2 == "l") m = <0,1,0>;             
                 else if (cmd2 == "r") m = <0,-1,0>;
                 
-                osNpcMoveToTarget(uNPC, v + m*r, OS_NPC_NO_FLY );
+                osNpcMoveToTarget(uNPC, v + mf*m*r, OS_NPC_NO_FLY );
+            }
+            else if (cmd1 == "runaround")
+            {
+                // The Npc will start to aimlessly run around in the specified radius (default 5m). Example: "Bob runaround 10"
+                float rad = (float)cmd2;
+                if (rad <=0) rad = 5;
+                vector v = osNpcGetPos(uNPC);
+                ControllerDo(npcName, "batch @loop; runtovr "+vec2str(v-<rad,rad,0>)+" " + vec2str(v+<rad,rad,0>)+"; jump loop");
+            }
+            
+            else if (cmd1 == "fetch")
+            {
+                // Used to teleport a user near you . Example: "Bob fetch alice" . Requires osTeleportAgent permissions
+                key u = getAgentByName(cmd2);
+            
+                if (u != NULL_KEY)
+                {
+                    list userData=llGetObjectDetails((key)sendUid, [OBJECT_NAME,OBJECT_POS, OBJECT_ROT]);
+                    vector v= llList2Vector(userData, 1);
+                    osTeleportAgent(u, v + <0,0,1>, <0,0,0>);
+                }
+                
+            }
+            else if (cmd1 == "daytime")
+            {
+                // Sets the time of day . E.g. "Bob daytime 1". Say "Bob daytime off" to revert to region default  
+                float dt = (float)cmd2;
+                if (cmd2 =="off")
+                {
+                    osSetRegionSunSettings( FALSE, FALSE, 0 );
+                    osNpcSay(uNPC," Setting day time to default");
+                }
+                else
+                {
+                    osSetRegionSunSettings( FALSE, TRUE, (float)(dt) );
+                    osNpcSay(uNPC," Setting day time to "+(string)dt+"h");
+                }
             }
             else
             {
               /* Unknown command */
+              
             }
         }
     }
