@@ -1011,6 +1011,7 @@ integer ProcessNPCCommand(string inputString)
         string str = llDumpList2String(llList2List(tokens, 5, llGetListLength(tokens))," ");
         aviScriptText =  []+llListReplaceList(aviScriptText, str, idx, idx);
         aviScriptIndex =  []+llListReplaceList(aviScriptIndex, [1], idx, idx);
+        aviStatus =  []+llListReplaceList(aviStatus, "", idx, idx);
         SetScriptAlarm(idx, 0);
     }
     else if (cmd1 == "follow")
