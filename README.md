@@ -524,3 +524,5 @@ The controller checks the number of visitors in your region every 2 minutes. If 
 
 The controller was tested with version 0.8.2.1 . There may be multiple issues with other versions. Please add an issue, or get in touch with Satyr Aeon @ hypergrid.org:8002
 
+# Thanks
+Thanks goes to Spax Orion for testing out lots of features and giving feedback    
