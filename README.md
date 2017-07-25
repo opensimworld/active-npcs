@@ -420,9 +420,9 @@ you can also use the DENYID command to block an avatar by UUID
 ```
 * * = DENYID d37a3f5b-562a-4bfd-b780-68c0b9b940b1
 ```
-and you can block any avatar from using any command with any NPC DENYID command to block an avatar by UUID
+and you can block any avatar from using any command with any NPC!
 ```
-* * = DENYID d37a3f5b-562a-4bfd-b780-68c0b9b940b1
+* * = DENYID *
 ```
 The rules specified in the notecard are executed from top to bottom, therefore you can add exceptions for specific users with the ALLOW and ALLOWID commands at the end of the list:
 ```
