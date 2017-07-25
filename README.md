@@ -351,6 +351,8 @@ prompt Do you want an [apple] or an [orange]?
 - The menu options can only be single words (e.g. "orange", or "apple"). They are case-insensitive, and the menu will work even if the word is said in a phrase (I.e. "I want an apple" will still jump to @apple) 
 
 
+
+
 # Waypoints and Pathfinding
 
 You can use the controller to create waypoints and links between them in your region. Bob can then walk between the connected points when you say 'Bob leave'
@@ -382,6 +384,76 @@ AutoLoadOnReset=0
 Change AutoLoadOnReset=0 to AutoLoadOnReset=1 to make the controller rez the NPCs automatically on region restart or script reset. Please note that autoloading NPCs may not always work well with some opensim versions.
 
 
+
+## Permissions
+
+Permissions allow you to limit access to NPCs ,  and to specific commands to certain users or to all users. An access control list is specified in the __permissions notecard which is inside the controller object.
+
+Each line in the __permissions notecard has the format 
+```
+<npc-name> <command-name> = <RULE> <avatar name>
+```
+Where <RULE> is ALLOW, DENY, ALLOWID, DENYID or ALLOWSAMEGROUP (read below for usage). 
+
+The following line blocks (denies) avatar  "Bad Hombre"  from issuing the "bob come" command:
+```
+bob come = DENY Bad Hombre
+```
+You can substitute the name of the NPC or the name of the command or the name of the avatar with the wildcard  character '*'. 
+for example, this blocks any the avatar from using the command:
+```
+bob come = DENY *
+```
+you can block any avatar from issuing the "come" command with any NPC:
+```
+* come = DENY *
+```
+you can block any avatar from issuing any command command with Bob:
+```
+Bob * = DENY *
+```
+you can block a specific avatar from using any command on any npc:
+```
+* * = DENY Bad Hombre
+```
+you can also use the DENYID command to block an avatar by UUID
+```
+* * = DENYID d37a3f5b-562a-4bfd-b780-68c0b9b940b1
+```
+and you can block any avatar from using any command with any NPC DENYID command to block an avatar by UUID
+```
+* * = DENYID d37a3f5b-562a-4bfd-b780-68c0b9b940b1
+```
+The rules specified in the notecard are executed from top to bottom, therefore you can add exceptions for specific users with the ALLOW and ALLOWID commands at the end of the list:
+```
+* come = ALLOW Good User
+* come = ALLOWID d37a3f5b-562a-4bfd-b780-68c0b9b940b1
+```
+You can also use the keyword ALLOWSAMEGROUP, which allows any avatar that is in the same group as the controller object.
+```
+* come = ALLOWSAMEGROUP
+```
+You  can use the wildcard '*'  with the ALLOW commands as well
+```
+Bob come = ALLOW *
+* come = ALLOW * 
+Bob * = ALLOW *
+```
+
+An example __permissions notecard is given below which blocks any avatar from controlling the NPC "Alice" and disallows the "exec" command, but allows exceptions to certain users. It also Blocks "evil user" from any command: 
+```
+Alice * = DENY *
+* exec = DENY *
+Alice * = ALLOW Good User
+Alice * = ALLOWSAMEGROUP
+* exec = ALLOW Good User
+* exec = Allow Another Gooduser
+* * = DENY Evil User
+```
+
+Note that the ALLOW, DENY, ALLOWID etc. rules need to be in CAPITALS. Also, There must always be a space before and after the '='  character.  
+
+The owner of the controller is always able to use all commands with all NPCs. 
 
 ## Initialization commands
 The notecard __initcommands contains initial commands to give to the NPCs. If AutoLoadOnReset is enabled, the notecard contents are executed automatically after loading. You can also manually execute the notecard by clicking "InitCmds" from the controller menu.  You can use  the __initcommands  to add any command that sets your NPCs in motion. Typically you would tell them to "leave" so that they start  walking between waypoints. An example of __initcommands is : 
@@ -418,6 +490,8 @@ The syntax is the same as the one used in link_message:
 llRegionSay(68, "! 0000-0000-0000-0000  Bob Bob say hello");
 ```
 The UUID can be zero, and the name of the NPC must be repeated twice, as shown above
+* ONLY scripts owned by the owner of the controller can send commands this way * 
+
 
 ## Setting controller variables from other objects
 
