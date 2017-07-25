@@ -451,9 +451,11 @@ Alice * = ALLOWSAMEGROUP
 * * = DENY Evil User
 ```
 
-Note that the ALLOW, DENY, ALLOWID etc. rules need to be in CAPITALS. Also, There must always be a space before and after the '='  character.  
+- Note that the ALLOW, DENY, ALLOWID etc. rules need to be in CAPITALS. Also, There must always be a space before and after the '='  character. 
 
-The owner of the controller is always able to use all commands with all NPCs. 
+- The owner of the controller is always able to use all commands with all NPCs regardless of access list. 
+- If you make changes to the __permissions notecard, please click on the controller ->ReConfig to reload the permissions list.
+
 
 ## Initialization commands
 The notecard __initcommands contains initial commands to give to the NPCs. If AutoLoadOnReset is enabled, the notecard contents are executed automatically after loading. You can also manually execute the notecard by clicking "InitCmds" from the controller menu.  You can use  the __initcommands  to add any command that sets your NPCs in motion. Typically you would tell them to "leave" so that they start  walking between waypoints. An example of __initcommands is : 
