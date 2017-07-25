@@ -126,6 +126,91 @@ integer ScriptJump(integer idx, string label, integer complain)
     }
 }
 
+list permList;
+string permCache;
+
+LoadPerms()
+{
+    permList=[];
+    permCache = "";
+    if (llGetInventoryType("__permissions")==INVENTORY_NOTECARD)
+    {
+        llOwnerSay("Loading Permissions...");
+        list lines = llParseString2List(osGetNotecard("__permissions"), ["\n"], []);
+        integer l;
+        for (l=0;l<llGetListLength(lines);l++)
+        {
+            list tk = llParseString2List(llList2String(lines,l), [" "], []);
+            if (llList2String(tk,2) == "=")
+            {
+                string kw = llList2String(tk,3);
+                string rule=llList2String(tk,0)+" "+llList2String(tk,1);
+                string n= llToLower(llStringTrim(llList2String(tk,4)+ " " + llList2String(tk,5), STRING_TRIM));
+                if (n == "" ) n= "*";
+                string val=kw+"|"+n+"|";
+                permList+=rule;
+                permList+=kw;
+                permList+=n;
+                if (llSubStringIndex(permCache,rule)<0) permCache+= rule;
+            }
+        }
+        llOwnerSay(llList2CSV(permList));
+        llOwnerSay(llList2CSV(permCache));
+    }
+}
+
+
+integer IsAllowed(string npc, string cmd, key uid)
+{
+    if (uid == llGetOwner() || llGetListLength(permList)==0) return 1;
+    
+    string ss = "* *";
+    string ns = npc+" *";
+    string sc = "* "+cmd;    
+    string nc = npc+" "+cmd;
+    
+    if (llSubStringIndex(permCache, ss)<0 &&  llSubStringIndex(permCache, ns)<0 &&  llSubStringIndex(permCache, sc)<0 &&    llSubStringIndex(permCache, nc)<0 ) return 1;
+
+    integer allow=1;
+    string name = llToLower(llKey2Name(uid));
+    integer k;
+    for (k=0; k< llGetListLength(permList); k+=3)
+    {
+        string rule = llList2String(permList,k);
+        if (rule==ss || rule==ns || rule==sc || rule==nc)
+        {
+            //llOwnerSay("R="+rule);
+            string r = llList2String(permList, k+1);
+            if (r =="ALLOW" || r == "DENY")
+            {
+                string who=llList2String(permList, k+2);
+                if (who == "*" || who==name)
+                {
+                    if (r == "ALLOW") allow=1;
+                    else allow=0;
+                }
+            }
+            else if (r=="ALLOWID")
+            {
+                if ( uid == llList2Key(permList, k+2)) allow=1;
+            }
+            else if (r=="DENYID")
+            {
+                if ( uid == llList2Key(permList, k+2)) allow=0;
+            }
+            else if (r =="ALLOWSAMEGROUP") 
+            {
+                if ( llSameGroup(uid)) { 
+                    allow=1;
+                }
+            }
+        }
+    }
+    return allow;
+}
+
+
+
 ReloadConfig()
 {
     availableNames = [];
@@ -163,6 +248,8 @@ ReloadConfig()
         }
     }
     if (LASTNAME == "") LASTNAME = "(NPC)";
+    
+    LoadPerms();
 
 }
 
@@ -592,6 +679,8 @@ integer ProcessNPCCommand(string inputString)
         return 1;
     }
     
+    
+    
     if (llSubStringIndex(inputString, "$")>=0) //substiute variables
     {
         integer i;
@@ -608,6 +697,16 @@ integer ProcessNPCCommand(string inputString)
     string cmd1= llList2String(tokens,4);
     string cmd2= llList2String(tokens,5);
     list userData;
+    
+    if (sendUid != NULL_KEY)
+    {
+        if (!IsAllowed(npcName, cmd1, sendUid)) 
+        {
+            llOwnerSay("Denied '"+cmd1+"' to "+llKey2Name(sendUid));
+            return 1;
+        }
+    }
+
     
     if (llList2String(aviStatus, idx) == "prompt")
     {
@@ -628,6 +727,7 @@ integer ProcessNPCCommand(string inputString)
             return 1; 
         }
     }
+    
     
     if (cmd1 == "stop")
     {
@@ -1546,6 +1646,12 @@ default
         string mes = str;                                
         integer x = llSubStringIndex(str, " ");
         if (x >=0)    mes = llGetSubString(str, 0,x-1);
+
+        if (!(osIsNpc(llGetOwnerKey(id)) || llGetOwnerKey(id)==llGetOwner())) 
+        {
+            llOwnerSay("Denied access to "+llKey2Name(id)); 
+            return; 
+        }
 
         //llOwnerSay("<<" + str);
         if (mes == "!") // Something that has been sent from a Listener of attached to an NPC
