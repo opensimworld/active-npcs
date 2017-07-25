@@ -393,7 +393,7 @@ Each line in the __permissions notecard has the format
 ```
 <npc-name> <command-name> = <RULE> <avatar name>
 ```
-Where <RULE> is ALLOW, DENY, ALLOWID, DENYID or ALLOWSAMEGROUP (read below for usage). 
+Where RULE is ALLOW, DENY, ALLOWID, DENYID or ALLOWSAMEGROUP (read below for usage). 
 
 The following line blocks (denies) avatar  "Bad Hombre"  from issuing the "bob come" command:
 ```
