@@ -1,0 +1,25 @@
+# The keywords DENY, ALLOW, ALLOWSAMEGROUP etc must be in CAPITALS, and there must be spaces around the ' = ' 
+# The owner of the controller will always be able to access any command
+
+Bob say = DENY Evil User    # Block the evil user from using the "say" command on Bob 
+
+* say = DENY Evil User      # Block the evil user from using the say command on any NPC
+
+Bob * = DENY Evil User      # Block the user from using the any command on Bob
+
+Bob * = DENYID d37a3f5b-562a-4bfd-b780-68c0b9b940be     # Block the user by uuid
+
+Bob say = DENY *             # Disallow anyone to use the "say" command with Bob
+
+* * = DENY *                 # Disallow anyone from using any commands on any NNPC
+
+* * = ALLOWSAMEGROUP         # But allow anyone who is in the same group as the controller object to use any command on any NPC
+
+* * = ALLOW Good User1       # Also allow good user to access any command
+
+Bob * = ALLOW Goodish User   # also allow goodish user to use any commands with bob only
+
+* dance = ALLOW *            # Allow anyone to issue the dance command with any npc
+
+alice follow = ALLOW *       # Allow anyone to use the follow command with alice
+
