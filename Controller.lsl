@@ -4,9 +4,7 @@ integer TIMER_INTERVAL=5; // how often to run the timer
 integer autoLoadOnReset=0;
 string LASTNAME="(NPC)";
 
-
 // Nothing to edit here, see https://github.com/opensimworld/active-npcs for configuration
-
 list availableNames = [];
 list lastNames = [];
 // These will be loaded from notecards
