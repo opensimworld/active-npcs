@@ -3,6 +3,10 @@
  * The commands are implemented through the link_message below. 
  */
 
+string vec2str(vector v) //string without spaces
+{
+   return "<"+(string)v.x+","+(string)v.y+","+(string)v.z+">";
+}
 
 key getAgentByName(string firstName)
 {
