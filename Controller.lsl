@@ -698,11 +698,11 @@ integer ProcessNPCCommand(string inputString)
     string cmd2= llList2String(tokens,5);
     list userData;
     
-    if (sendUid != NULL_KEY)
+    if (sendUid!= NULL_KEY && (llGetAgentSize(sendUid) != ZERO_VECTOR))
     {
         if (!IsAllowed(npcName, cmd1, sendUid)) 
         {
-            llOwnerSay("Denied '"+cmd1+"' to "+llKey2Name(sendUid));
+            llOwnerSay("Denied '"+cmd1+"' to "+(string)sendUid+" "+llKey2Name(sendUid));
             return 1;
         }
     }
