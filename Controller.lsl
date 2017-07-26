@@ -144,7 +144,7 @@ LoadPerms()
             if (llList2String(tk,2) == "=")
             {
                 string kw = llList2String(tk,3);
-                string rule=llList2String(tk,0)+" "+llList2String(tk,1);
+                string rule=llToLower(llList2String(tk,0)+" "+llList2String(tk,1));
                 string n= llToLower(llStringTrim(llList2String(tk,4)+ " " + llList2String(tk,5), STRING_TRIM));
                 if (n == "" ) n= "*";
                 string val=kw+"|"+n+"|";
