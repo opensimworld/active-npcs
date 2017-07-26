@@ -700,7 +700,7 @@ integer ProcessNPCCommand(string inputString)
     {
         if (!IsAllowed(npcName, cmd1, sendUid)) 
         {
-            llOwnerSay("Denied '"+cmd1+"' to "+(string)sendUid+" "+llKey2Name(sendUid));
+            llOwnerSay("Denied '"+cmd1+"' to "+llKey2Name(sendUid));
             return 1;
         }
     }
