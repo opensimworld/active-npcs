@@ -162,9 +162,8 @@ Bob go to       : without  a destination, Bob will print the names of waypoints 
 
 ```
 
-### Batch command Notecards 
+## Command Notecards 
 Multiple commands can be appended to a notecard, and then the NPC can execute them.
-
 ```
 Bob run-notecard my_script.scr     : Execute the contents of the notecard my_script.scr (the notecard must be in the controller inventory
 
@@ -176,8 +175,7 @@ Bob stop-script     : Stop executing the notecard script
 
 ```
 
-
-### Multiple appearances 
+## Multiple appearances 
 
 You can have multiple appearance notecards for an NPC by renaming them. The default notecard for NPC Bob is stored in the APP_bob notecard. You can rename the notecard to, e.g.  APP_bob_swimming, and then ask bob to load that notecard:
 
@@ -317,7 +315,7 @@ stop
 You can then say "Bob dance" to have bob execute the notecard
 
 
-# Interactive menus
+## Interactive menus
 
 With interactive menus, your NPCs can ask your visitors to make a choice from a menu in the local chat. The following notecard asks the user if they want apple or an orange and gives an object to them:
 
@@ -353,7 +351,7 @@ prompt Do you want an [apple] or an [orange]?
 
 
 
-# Waypoints and Pathfinding
+## Waypoints and Pathfinding
 
 You can use the controller to create waypoints and links between them in your region. Bob can then walk between the connected points when you say 'Bob leave'
 
@@ -400,15 +398,15 @@ The following line blocks (denies) avatar  "Bad Hombre"  from issuing the "bob c
 bob come = DENY Bad Hombre
 ```
 You can substitute the name of the NPC or the name of the command or the name of the avatar with the wildcard  character '*'. 
-for example, this blocks any the avatar from using the command:
+for example, this blocks any avatar from using the command:
 ```
 bob come = DENY *
 ```
-you can block any avatar from issuing the "come" command with any NPC:
+you can block any avatar from issuing the "come" command to any NPC:
 ```
 * come = DENY *
 ```
-you can block any avatar from issuing any command command with Bob:
+you can block any avatar from issuing any command to Bob:
 ```
 Bob * = DENY *
 ```
@@ -422,7 +420,7 @@ you can also use the DENYID command to block an avatar by UUID
 ```
 and you can block any avatar from using any command with any NPC!
 ```
-* * = DENYID *
+* * = DENY *
 ```
 The rules specified in the notecard are executed from top to bottom, therefore you can add exceptions for specific users with the ALLOW and ALLOWID commands at the end of the list:
 ```
@@ -440,7 +438,7 @@ Bob come = ALLOW *
 Bob * = ALLOW *
 ```
 
-An example __permissions notecard is given below which blocks any avatar from controlling the NPC "Alice" and disallows the "exec" command, but allows exceptions to certain users. It also Blocks "evil user" from any command: 
+An example __permissions notecard is given below which blocks any avatar from controlling the NPC "Alice" and disallows the "exec" command, but allows exceptions to certain users. It also blocks "evil user" from any command: 
 ```
 Alice * = DENY *
 * exec = DENY *
@@ -452,7 +450,6 @@ Alice * = ALLOWSAMEGROUP
 ```
 
 - Note that the ALLOW, DENY, ALLOWID etc. rules need to be in CAPITALS. Also, There must always be a space before and after the '='  character. 
-
 - The owner of the controller is always able to use all commands with all NPCs regardless of access list. 
 - If you make changes to the __permissions notecard, please click on the controller ->ReConfig to reload the permissions list.
 
@@ -516,7 +513,7 @@ setvar foo 0        : Reset var foo to 0 before waiting again
 jump start
 ```
 
-# Technical Notes
+## Technical Notes
 
 The controller runs a single timer, that updates the states of all the NPCs every 5 seconds. This allows it to be extremely lightweight, as it does not block any script processing, but it may also cause delays when executing commands. 
 
