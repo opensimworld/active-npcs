@@ -23,10 +23,9 @@ key getAgentByName(string firstName)
 }
 
 // This can be used to send a command back to the controller, e.g. ControllerDo("Bob", "say i am an NPC");
-ControllerDo(string npcName, string msg)
+ ControllerDo(string npcName, string msg)
 {
-     
-    llMessageLinked(LINK_THIS, 0, "! 0000 UUUU " +npcName+ " "+msg, NULL_KEY);
+    llMessageLinked(LINK_THIS, 0, "! "+(string)NULL_KEY+" "+npcName+" " +npcName+ " "+msg, NULL_KEY);
 }
 
 
