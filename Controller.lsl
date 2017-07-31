@@ -4,7 +4,9 @@ integer TIMER_INTERVAL=5; // how often to run the timer
 integer autoLoadOnReset=0;
 string LASTNAME="(NPC)";
 
+
 // Nothing to edit here, see https://github.com/opensimworld/active-npcs for configuration
+
 list availableNames = [];
 list lastNames = [];
 // These will be loaded from notecards
@@ -59,7 +61,7 @@ list wayLinks;
 list wayKeys;
 string name;
 key npc;
-key avi;
+
 list candidateNode=[];
 
 
@@ -700,7 +702,7 @@ integer ProcessNPCCommand(string inputString)
     {
         if (!IsAllowed(npcName, cmd1, sendUid)) 
         {
-            llOwnerSay("Denied '"+cmd1+"' to "+llKey2Name(sendUid));
+            llOwnerSay("Denied '"+cmd1+"' to "+(string)sendUid+" "+llKey2Name(sendUid));
             return 1;
         }
     }
@@ -1417,9 +1419,9 @@ default
     
     touch_start(integer num)
     {
-        avi = llDetectedKey(0);
-        if (avi != llGetOwner()) return;
-        llDialog(avi, "Welcome", menuItems, channel);
+        
+        if (llDetectedKey(0) != llGetOwner()) return;
+        llDialog(llGetOwner(), "Welcome", menuItems, channel);
     }
     
 
@@ -1739,23 +1741,23 @@ default
 
         if  (mes == "SaveNPC")
         {
-            llDialog(avi, "Select NPC to save your appearance", llList2List(availableNames, 0,10)+ "more", channel);       
+            llDialog(llGetOwner(), "Select NPC to save your appearance", llList2List(availableNames, 0,10)+ "more", channel);       
 
             userInputState = "WAIT_APPNAME";
         }
         else if (mes == "LoadNPC")
         {
-            llDialog(avi, "Select an NPC to load", llList2List(availableNames, 0,10)+"more", channel);     
+            llDialog(llGetOwner(), "Select an NPC to load", llList2List(availableNames, 0,10)+"more", channel);     
             userInputState = "WAIT_AVINAME";
         }
         else if (mes == "RemoveNPC")
         {
-            llDialog(avi, "Select an NPC to delete",  llList2List(availableNames, 0,10)+ "more", channel); 
+            llDialog(llGetOwner(), "Select an NPC to delete",  llList2List(availableNames, 0,10)+ "more", channel); 
             userInputState = "WAIT_REMOVEAVI";
         }
         else if (mes == "UpdateNPC")
         {
-            llDialog(avi, "Select an NPC to re-save appearance ", llList2List(availableNames, 0,10)+"more", channel);     
+            llDialog(llGetOwner(), "Select an NPC to re-save appearance ", llList2List(availableNames, 0,10)+"more", channel);     
             userInputState = "WAIT_UPDATE";
         }
         else if (mes == "RemoveAll")
@@ -1949,14 +1951,14 @@ default
         {
             if (mes == "more")
             {
-                 llDialog(avi, "Select an NPC", llList2List(availableNames, 11,-1), channel);
+                 llDialog(llGetOwner(), "Select an NPC", llList2List(availableNames, 11,-1), channel);
             }
             else
             {
                 if (userInputState == "WAIT_APPNAME")
                 {
-                    osAgentSaveAppearance(avi, "APP_"+llToLower(mes));
-                    llSay(0,  "Saved Appearance " + avi + " -> APP_"+llToLower(mes));
+                    osAgentSaveAppearance(llGetOwner(), "APP_"+llToLower(mes));
+                    llSay(0,  "Saved Appearance " + llGetOwner() + " -> APP_"+llToLower(mes));
                 }
                 else if (userInputState == "WAIT_PEGNAME")
                 {
