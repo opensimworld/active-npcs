@@ -289,7 +289,7 @@ doLoadNPC(string first, string last)
             return;
         }
 
-        key unpc = osNpcCreate(first, last, llGetPos()+<0,0,3>, "APP_"+llToLower(first),  0);
+        key unpc = osNpcCreate(first, last, llGetPos()+<0,0,3>, "APP_"+llToLower(first), OS_NPC_SENSE_AS_AGENT );
         if (unpc != NULL_KEY)
             doAddNpc(first, unpc);
 }
@@ -347,17 +347,6 @@ doRemoveNpc(string who)
 doLoadAll()
 {
             integer i;
-            // If reloading, we unsit them from poseballs
-            avis = osGetAvatarList();
-            llOwnerSay(llList2CSV(avis));
-            howmany = llGetListLength(avis);
-            for (i =0; i < howmany; i+=3)
-            {
-                if (osIsNpc(llList2Key(avis, i)))
-                {
-                    osNpcStand(llList2Key(avis, i));
-                }
-            }
             for (i=0; i < llGetListLength(availableNames);i++)
             {
                 doLoadNPC(llList2String(availableNames, i),  llList2String(lastNames, i));
@@ -1028,6 +1017,14 @@ integer ProcessNPCCommand(string inputString)
         for (i=6; i < llGetListLength(tokens); i++)
             txt += llList2String(tokens,i) + " ";
         osNpcSay(uNPC,  llList2Integer(tokens,5), txt);
+    }
+    else if (cmd1 == "loadnpc")
+    {
+        doLoadNPC(cmd2, llList2String(tokens, 5));
+    }
+    else if (cmd1 == "removenpc")
+    {
+        doRemoveNpc(cmd2);
     }
     else if (cmd1 == "exec")
     {
@@ -1770,8 +1767,10 @@ default
             {
                 if (osIsNpc(llList2Key(avis, i)))
                 {
-                    osNpcStand(llList2Key(avis, i));
-                    osNpcRemove(llList2Key(avis, i));
+                    list p = llParseString2List(llKey2Name(llList2Key(avis,i)), [" "], []);
+                    doRemoveNpc(llList2String(p, 0));
+                    //osNpcStand(llList2Key(avis, i));
+                    //osNpcRemove(llList2Key(avis, i));
                 }
             }
             aviUids = [];
