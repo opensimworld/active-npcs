@@ -1020,7 +1020,7 @@ integer ProcessNPCCommand(string inputString)
     }
     else if (cmd1 == "loadnpc")
     {
-        doLoadNPC(cmd2, llList2String(tokens, 5));
+        doLoadNPC(cmd2, llList2String(tokens, 6));
     }
     else if (cmd1 == "removenpc")
     {
