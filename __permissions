@@ -23,3 +23,8 @@ Bob * = ALLOW Goodish User   # also allow goodish user to use any commands with 
 
 alice follow = ALLOW *       # Allow anyone to use the follow command with alice
 
+* exec = DENY *
+
+* loadnpc = DENY *
+
+* removenpc = DENY *
