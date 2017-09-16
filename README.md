@@ -157,7 +157,7 @@ Bob setpath 0:1:3:5:1:0            : Walk through the given waypoints, i.e. walk
 Bob goto 13     : Will walk between connected waypoints to waypoint #13 
 
 Bob go to Bar   :  Will walk between connected waypoints to the waypoint named "Bar"
-
+                : BEWARE! "goto" and "go to" (with space) are different commands
 Bob go to       : without  a destination, Bob will print the names of waypoints he knows
 
 ```
