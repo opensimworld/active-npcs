@@ -3,7 +3,7 @@
    */
 
 list seen = [];
-list alreadyGreeted = [];
+list already = [];
 
 string vec2str(vector v)
 {
@@ -34,7 +34,7 @@ checkVisitors()
                     scr = "teleport "+vec2str(v+<2,0,0>*r) +"; stop; lookat "+vec2str(v)+"; anim bow; say  Welcome to My Region! If you need help, say 'Magnus help'. Enjoy your stay!; wait 50; leave";
                     
                     llRegionSay(68, "! 00000000-0000-0000-0000-000000000000 magnus magnus batch "+scr);
-                    alreadySeen += u;
+                    already += u;
                 }
             }
         }
