@@ -2,13 +2,12 @@
 
 This is a full-featured controller for creating interactive NPCs , scripting them (through notecards) and creating waypoints of your region so that the NPCs can walk around your region. The controller is extremely lightweight (a single script manages all the NPCs) and the NPCs are interactive (i.e. you can give them commands through the local chat).
 
-You can get the latest  package from the OpenSimWorld region in Metropolis, where you can also see them in action:
+You can get the latest  package from the OpenSimWorld region:
 
 http://opensimworld.com/hop/74730-OpenSimWorld
 
-Hypergrid: hypergrid.org:8002:OpenSimWorld
+Hypergrid: hg.osgrid.org:80:OpenSimWorld
 
-(You have to  move down near the bunker to find the package)
 
 Visit https://github.com/opensimworld/active-npcs/edit/master/README.md for an up-to-date version of this documentation.
 
